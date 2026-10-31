@@ -81,7 +81,7 @@ cd api && uv run uvicorn app.main:app --reload
 Check it: open http://127.0.0.1:8000/health and expect `{"ok": true}`. Every other route answers
 `403 LICENSE_EXPIRED` until a licence is uploaded (section 7).
 
-Streamlit on port 8501 (from task A0):
+Streamlit on port 8501, pointed at the local API:
 
 ```bash
 cd web && uv run streamlit run app.py
@@ -165,10 +165,9 @@ docker run --rm -p 8000:8000 -v scam-map-data:/data -e SCAM_MAP_HMAC_KEY=<your k
 
 The database and the uploaded licence live on the `/data` volume, so they survive container restarts.
 
-## 9. Deployment shape
+## 9. Deploy
 
-Two services on the cloud host (DECISIONS D55): the API container is the HTTPS address the judges test, and the
-Streamlit container is the phone link, with `SCAM_MAP_API_URL` pointing at the API. The host is chosen in task A0.
+Two apps on Fly.io (DECISIONS D55, D56). Step-by-step commands are in [infra/README.md](../infra/README.md).
 
 ## Windows notes
 

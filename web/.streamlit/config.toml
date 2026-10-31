@@ -1,0 +1,20 @@
+# Streamlit settings for the mobile website: quiet, private, no error details shown to users.
+# Owner: A. Filled in by: A0.
+
+[server]
+headless = true
+fileWatcherType = "none"
+
+[browser]
+gatherUsageStats = false
+
+[client]
+showErrorDetails = "none"
+toolbarMode = "minimal"
+
+[logger]
+level = "warning"
+
+[theme]
+base = "light"
+primaryColor = "#1f6feb"

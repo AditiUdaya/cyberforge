@@ -32,7 +32,8 @@ target-version = "py312"
 select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101"]
+# Tests use asserts, and seeded (non-cryptographic) randomness for reproducible data.
+"tests/**" = ["S101", "S311"]
 
 [tool.mypy]
 strict = true

@@ -1,7 +1,7 @@
 """POST /reports: validate, normalise, HMAC reporter fields, rate limit (429), store.
-Replies 201 {report_id, case_id, merged} or 400. Trust rules and 429 arrive in B5.
+Replies 201 {report_id, case_id, merged}, 400, or 429 for a reporter over the hourly limit.
 
-Owner: B. Filled in by: B2.
+Owner: B. Filled in by: B2, B5 (429 and note fingerprints).
 """
 
 from __future__ import annotations
@@ -17,6 +17,8 @@ from app.clock import Clock
 from app.core import validate
 from app.core.identity import Keyring, connection_prefix
 from app.core.normalise import IdentifierType, InvalidIdentifier, normalise
+from app.core.notes import sketch
+from app.core.trust_config import RATE_LIMIT_PER_HOUR
 from app.db import Database
 from app.deps import get_clock, get_db, get_keyring
 from app.errors import error_response
@@ -70,6 +72,7 @@ def create_report(
     except validate.InvalidReport as e:
         return error_response(400, str(e))
 
+    reported = validate.reported_at(body.reported_at, occurred, now)
     prefix = body.ip_prefix
     if not prefix:
         prefix = connection_prefix(request.client.host if request.client else None)
@@ -83,12 +86,15 @@ def create_report(
         scam_type=validate.scam_type(body.scam_type),
         pincode=pincode,
         occurred_at=validate.to_utc_text(occurred),
-        reported_at=validate.to_utc_text(now),
+        reported_at=validate.to_utc_text(reported),
         note_length=len(body.note.strip()),
+        note_sketch=sketch(body.note, keys.note_key()),
         has_screenshot=body.has_screenshot,
         amount_lost_inr=body.amount_lost_inr,
         origin="api" if body.ip_prefix else "web",
     )
     with db.write() as conn:
+        if store.recent_reports(conn, new.reporter_hmac, reported) >= RATE_LIMIT_PER_HOUR:
+            return error_response(429, "too many reports from this reporter; try again later")
         case_id, merged = store.add_report(conn, new)
     return ReportOut(report_id=body.report_id, case_id=case_id, merged=merged)

@@ -440,9 +440,11 @@ def _free_port() -> int:
 
 
 @contextmanager
-def local_server() -> Iterator[str]:
+def local_server(workdir: Path | None = None) -> Iterator[str]:
     """Start the API from ../api on a free port with a throwaway database.
 
+    With a workdir, the database (scam_map.sqlite) and everything the server prints
+    (server.log, at info level) stay there afterwards for the privacy scanners.
     Runs the API venv's Python directly rather than through `uv run`: on Windows, stopping
     `uv` leaves its uvicorn child running.
     """
@@ -450,6 +452,8 @@ def local_server() -> Iterator[str]:
     port = _free_port()
     signing_key = Ed25519PrivateKey.generate()
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+        folder = workdir or Path(tmp)
+        folder.mkdir(parents=True, exist_ok=True)
         public_pem = Path(tmp) / "public_key.pem"
         public_pem.write_bytes(
             signing_key.public_key().public_bytes(
@@ -457,7 +461,7 @@ def local_server() -> Iterator[str]:
             )
         )
         env = os.environ | {
-            "SCAM_MAP_DB_PATH": str(Path(tmp) / "contract.sqlite"),
+            "SCAM_MAP_DB_PATH": str(folder / "scam_map.sqlite"),
             "SCAM_MAP_HMAC_KEY": secrets.token_hex(32),
             "SCAM_MAP_LICENSE_PUBLIC_KEY": str(public_pem),
         }
@@ -470,17 +474,20 @@ def local_server() -> Iterator[str]:
             str(port),
             "--no-access-log",
             "--log-level",
-            "warning",
+            "info" if workdir else "warning",
         ]
-        proc = subprocess.Popen(args, cwd=REPO / "api", env=env)
-        try:
-            base = f"http://127.0.0.1:{port}"
-            _wait_ready(base, proc)
-            _install_licence(base, signing_key)
-            yield base
-        finally:
-            proc.terminate()
-            proc.wait(timeout=10)
+        with open(folder / "server.log", "wb") as log:
+            proc = subprocess.Popen(
+                args, cwd=REPO / "api", env=env, stdout=log, stderr=subprocess.STDOUT
+            )
+            try:
+                base = f"http://127.0.0.1:{port}"
+                _wait_ready(base, proc)
+                _install_licence(base, signing_key)
+                yield base
+            finally:
+                proc.terminate()
+                proc.wait(timeout=10)
 
 
 def _install_licence(base: str, key: Ed25519PrivateKey) -> None:

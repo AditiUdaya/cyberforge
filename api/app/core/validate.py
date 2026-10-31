@@ -44,6 +44,21 @@ def occurred_at(raw: str, now: datetime) -> datetime:
     return when
 
 
+def reported_at(raw: str | None, occurred: datetime, now: datetime) -> datetime:
+    """The report's own reported_at, clamped between occurred_at and now; now when unusable.
+
+    The PRD's test tool posts many reports in seconds, so arrival time says nothing about when
+    people reported. A reported_at outside that range is clamped, never trusted as is.
+    """
+    if not raw:
+        return now
+    try:
+        when = parse_time(raw, field="reported_at")
+    except InvalidReport:
+        return now
+    return min(max(when, occurred), now)
+
+
 def pincode(raw: str) -> str:
     value = raw.strip()
     if not is_known(value):

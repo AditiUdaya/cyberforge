@@ -21,7 +21,17 @@ from app.license import gate
 from app.license.state import LicenceState
 from app.license.verify import load_public_key
 from app.migrate import apply_migrations
-from app.routes import admin, alerts, app_areas, challenges, health, license, lookup, reports
+from app.routes import (
+    admin,
+    alerts,
+    app_areas,
+    challenges,
+    health,
+    license,
+    lookup,
+    reports,
+    root,
+)
 from app.routes import map as map_route
 
 
@@ -56,7 +66,18 @@ def create_app(
     app.state.clock = clock if clock is not None else SystemClock()
     errors.install(app)
     gate.install(app)
-    routes = (health, reports, lookup, map_route, alerts, admin, challenges, license, app_areas)
+    routes = (
+        root,
+        health,
+        reports,
+        lookup,
+        map_route,
+        alerts,
+        admin,
+        challenges,
+        license,
+        app_areas,
+    )
     for route in routes:
         app.include_router(route.router)
     return app

@@ -3,14 +3,19 @@
 Every value passed in is already validated, normalised and, for identifiers and reporter
 fields, a keyed HMAC.
 
-Owner: B. Filled in by: B2.
+Owner: B. Filled in by: B2 (storage), B5 (trust rules), B6 (areas, challenges).
 """
 
 from __future__ import annotations
 
+import json
 import secrets
 import sqlite3
 from dataclasses import dataclass
+from datetime import datetime
+
+from app.core.trust import ReportFacts, assess
+from app.core.trust_config import RATE_LIMIT_WINDOW
 
 
 @dataclass(frozen=True)
@@ -26,6 +31,7 @@ class NewReport:
     occurred_at: str
     reported_at: str
     note_length: int
+    note_sketch: bytes
     has_screenshot: bool
     amount_lost_inr: float
     origin: str
@@ -64,10 +70,18 @@ def add_report(conn: sqlite3.Connection, report: NewReport) -> tuple[str, bool]:
             "INSERT INTO cases (case_id, identifier_type, identifier_hmac) VALUES (?, ?, ?)",
             (case_id, report.identifier_type, report.identifier_hmac),
         )
+    first_time = (
+        conn.execute(
+            "SELECT 1 FROM reports WHERE reporter_hmac = ? AND reported_at < ? LIMIT 1",
+            (report.reporter_hmac, report.reported_at),
+        ).fetchone()
+        is None
+    )
     conn.execute(
         "INSERT INTO reports (report_id, case_id, reporter_hmac, ip_prefix_hmac, channel,"
-        " scam_type, pincode, occurred_at, reported_at, note_length, has_screenshot,"
-        " amount_lost_inr, origin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        " scam_type, pincode, occurred_at, reported_at, note_length, note_sketch,"
+        " has_screenshot, amount_lost_inr, origin, first_time)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             report.report_id,
             case_id,
@@ -79,20 +93,60 @@ def add_report(conn: sqlite3.Connection, report: NewReport) -> tuple[str, bool]:
             report.occurred_at,
             report.reported_at,
             report.note_length,
+            report.note_sketch,
             int(report.has_screenshot),
             report.amount_lost_inr,
             report.origin,
+            int(first_time),
         ),
     )
     _recompute(conn, case_id)
     return case_id, merged
 
 
+def recent_reports(conn: sqlite3.Connection, reporter_hmac: str, reported_at: datetime) -> int:
+    """How many reports this reporter made within the rate-limit window around this one."""
+    low = (reported_at - RATE_LIMIT_WINDOW).isoformat()
+    high = (reported_at + RATE_LIMIT_WINDOW).isoformat()
+    row = conn.execute(
+        "SELECT COUNT(*) FROM reports WHERE reporter_hmac = ? AND reported_at > ?"
+        " AND reported_at < ?",
+        (reporter_hmac, low, high),
+    ).fetchone()
+    return int(row[0])
+
+
 def _recompute(conn: sqlite3.Connection, case_id: str) -> None:
-    """Refresh the case row a lookup reads. Until B5, each distinct reporter weighs 1."""
-    counts = conn.execute(
-        "SELECT COUNT(*) AS n, COUNT(DISTINCT reporter_hmac) AS people,"
-        " MIN(occurred_at) AS first, MAX(occurred_at) AS last"
+    """Re-run the trust rules over the whole case and refresh what a lookup reads."""
+    rows = conn.execute(
+        "SELECT id, reporter_hmac, ip_prefix_hmac, reported_at, occurred_at, note_length,"
+        " note_sketch, first_time FROM reports WHERE case_id = ?",
+        (case_id,),
+    ).fetchall()
+    result = assess(
+        [
+            ReportFacts(
+                id=int(r["id"]),
+                reporter=str(r["reporter_hmac"]),
+                ip=str(r["ip_prefix_hmac"]),
+                reported_at=datetime.fromisoformat(r["reported_at"]),
+                occurred_at=datetime.fromisoformat(r["occurred_at"]),
+                note_length=int(r["note_length"]),
+                sketch=bytes(r["note_sketch"]),
+                first_time=bool(r["first_time"]),
+            )
+            for r in rows
+        ]
+    )
+    conn.executemany(
+        "UPDATE reports SET status = ?, cluster_id = ?, weight = ? WHERE id = ?",
+        [
+            (result.statuses[rid], result.cluster_of[rid], result.weight_of[rid], rid)
+            for rid in result.statuses
+        ],
+    )
+    span = conn.execute(
+        "SELECT COUNT(*) AS n, MIN(occurred_at) AS first, MAX(occurred_at) AS last"
         " FROM reports WHERE case_id = ?",
         (case_id,),
     ).fetchone()
@@ -105,11 +159,11 @@ def _recompute(conn: sqlite3.Connection, case_id: str) -> None:
         "UPDATE cases SET report_count = ?, distinct_reporters = ?, weighted_score = ?,"
         " first_seen = ?, last_seen = ?, top_scam_type = ? WHERE case_id = ?",
         (
-            counts["n"],
-            counts["people"],
-            float(counts["people"]),
-            counts["first"],
-            counts["last"],
+            span["n"],
+            result.clusters,
+            result.score,
+            span["first"],
+            span["last"],
             top["scam_type"] if top is not None else None,
             case_id,
         ),
@@ -156,7 +210,78 @@ def evidence(conn: sqlite3.Connection, case_id: str, limit: int) -> list[Evidenc
     ]
 
 
+def area_counts(
+    conn: sqlite3.Connection, pincodes: list[str], since: str, until: str
+) -> dict[str, tuple[int, str]]:
+    """Counted reports per area with occurred_at in (since, until]: (count, top scam type)."""
+    if not pincodes:
+        return {}
+    rows = conn.execute(
+        "SELECT pincode, scam_type, COUNT(*) AS n, MAX(occurred_at) AS latest FROM reports"
+        " WHERE status = 'counted' AND pincode IN (SELECT value FROM json_each(?))"
+        " AND occurred_at > ? AND occurred_at <= ? GROUP BY pincode, scam_type",
+        (json.dumps(pincodes), since, until),
+    ).fetchall()
+    totals: dict[str, int] = {}
+    best: dict[str, tuple[int, str, str]] = {}
+    for r in rows:
+        pin, kind, n, latest = str(r["pincode"]), str(r["scam_type"]), int(r["n"]), str(r["latest"])
+        totals[pin] = totals.get(pin, 0) + n
+        if pin not in best or (n, latest) > best[pin][:2]:
+            best[pin] = (n, latest, kind)
+    return {pin: (total, best[pin][2]) for pin, total in totals.items()}
+
+
+def area_events(conn: sqlite3.Connection, pincode: str, since: str) -> list[tuple[datetime, str]]:
+    """(occurred_at, scam_type) of counted reports in one area since a time."""
+    rows = conn.execute(
+        "SELECT occurred_at, scam_type FROM reports WHERE status = 'counted' AND pincode = ?"
+        " AND occurred_at > ?",
+        (pincode, since),
+    ).fetchall()
+    return [(datetime.fromisoformat(r["occurred_at"]), str(r["scam_type"])) for r in rows]
+
+
+def add_challenge(
+    conn: sqlite3.Connection,
+    *,
+    identifier_type: str,
+    identifier_hmac: str,
+    claimant_name: str,
+    contact_email: str,
+    proof_note: str,
+    created: str,
+) -> str:
+    """Record a dispute and mark the identifier's case (creating it if needed) as challenged."""
+    challenge_id = f"chl_{secrets.token_hex(8)}"
+    conn.execute(
+        "INSERT INTO challenges (challenge_id, identifier_type, identifier_hmac, claimant_name,"
+        " contact_email, proof_note, created) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (
+            challenge_id,
+            identifier_type,
+            identifier_hmac,
+            claimant_name,
+            contact_email,
+            proof_note,
+            created,
+        ),
+    )
+    updated = conn.execute(
+        "UPDATE cases SET challenged = 1 WHERE identifier_type = ? AND identifier_hmac = ?",
+        (identifier_type, identifier_hmac),
+    ).rowcount
+    if not updated:
+        conn.execute(
+            "INSERT INTO cases (case_id, identifier_type, identifier_hmac, challenged)"
+            " VALUES (?, ?, ?, 1)",
+            (f"case_{secrets.token_hex(8)}", identifier_type, identifier_hmac),
+        )
+    return challenge_id
+
+
 def reset(conn: sqlite3.Connection) -> None:
-    """Delete every report and case. Reference data and the licence are kept."""
+    """Delete every report, case and challenge. Reference data and the licence are kept."""
     conn.execute("DELETE FROM reports")
+    conn.execute("DELETE FROM challenges")
     conn.execute("DELETE FROM cases")
