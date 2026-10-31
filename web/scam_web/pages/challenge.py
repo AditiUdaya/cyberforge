@@ -39,7 +39,7 @@ with main:
             try:
                 with guarded():
                     api().challenge(body)
-            except ApiError:
-                st.error(tr("report_rejected"))
+            except ApiError as e:
+                st.warning(tr("challenge_limit") if e.status == 429 else tr("report_rejected"))
             else:
                 st.success(f"✅ {tr('challenge_ok')}")

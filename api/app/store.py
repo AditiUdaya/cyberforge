@@ -262,6 +262,15 @@ def area_events(conn: sqlite3.Connection, pincode: str, since: str) -> list[tupl
     return [(datetime.fromisoformat(r["occurred_at"]), str(r["scam_type"])) for r in rows]
 
 
+def has_challenge(conn: sqlite3.Connection, identifier_type: str, identifier_hmac: str) -> bool:
+    """Whether this identifier already has a dispute: only one is allowed per number."""
+    row = conn.execute(
+        "SELECT 1 FROM challenges WHERE identifier_type = ? AND identifier_hmac = ? LIMIT 1",
+        (identifier_type, identifier_hmac),
+    ).fetchone()
+    return row is not None
+
+
 def add_challenge(
     conn: sqlite3.Connection,
     *,

@@ -99,8 +99,10 @@ def create_report(
         amount_lost_inr=body.amount_lost_inr,
         origin="api" if body.ip_prefix else "web",
     )
+    fresh = not activity.too_old(occurred, now)  # incidents 30+ days old never show as activity
     ctx = activity.Context(
         at=now,
+        occurred=occurred,
         pincode=pincode,
         scam_type=new.scam_type,
         channel=new.channel,
@@ -109,12 +111,13 @@ def create_report(
     )
     with db.write() as conn:
         if store.recent_reports(conn, new.reporter_hmac, reported) >= RATE_LIMIT_PER_HOUR:
-            activity.record(conn, "rate_limited", ctx, group=True)
+            if fresh:
+                activity.record(conn, "rate_limited", ctx, group=True)
             return error_response(429, "too many reports from this reporter; try again later")
         before = store.find_case(conn, new.identifier_type, new.identifier_hmac)
         case_id, merged, status = store.add_report(conn, new)
         after = store.find_case(conn, new.identifier_type, new.identifier_hmac)
-        if after is not None:
+        if after is not None and fresh:
             activity.report_events(
                 conn,
                 replace(ctx, case_id=case_id),
@@ -137,6 +140,11 @@ def _reason(message: str) -> str:
 
 def _rejected(db: Database, now: datetime, body: ReportIn, reason: str) -> None:
     """Show a rejection in the feed: the reason and, for a real area, where. Never the value."""
+    try:
+        if activity.too_old(validate.parse_time(body.occurred_at, field="occurred_at"), now):
+            return  # a rejected report about an old incident is not shown either
+    except validate.InvalidReport:
+        pass
     pincode = body.pincode.strip() if is_known(body.pincode.strip()) else None
     with db.write() as conn:
         where = activity.Context(at=now, pincode=pincode)

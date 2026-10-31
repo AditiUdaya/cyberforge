@@ -12,8 +12,8 @@ the rules were never tuned on.
 
 | | |
 | --- | --- |
-| API | http://127.0.0.1:8000 when running locally (`scripts/run_local.sh`) |
-| Mobile website | http://127.0.0.1:8501 (Streamlit, English and Hindi, works with icons alone) |
+| API | `http://<laptop address>:8000` on the same Wi-Fi; `scripts/run_local.sh` prints the address (http://127.0.0.1:8000 on the laptop itself) |
+| Mobile website | `http://<laptop address>:8501` (Streamlit, English and Hindi, works with icons alone) |
 | Brief | [docs/PRD.pdf](docs/PRD.pdf), our plan in [docs/SPEC.md](docs/SPEC.md), design in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 
 ## Run it
@@ -156,11 +156,11 @@ check every reply, every server log line and the raw database bytes for anything
 | Layer | What | Command | Result (31 Oct) |
 | --- | --- | --- | --- |
 | Unit and property | Normaliser, masking, verdicts, trust rules, licence; Hypothesis with 1,000 examples per property | `cd api && uv run pytest` | 400+ tests, 98% coverage of `core/` and `license/` |
-| Contract | Every PRD route, status and reply schema | `cd judge && uv run python contract.py --target local` | 32/32 |
+| Contract | Every PRD route, status and reply schema | `cd judge && uv run python contract.py --target local` | 33/33 |
 | Judge simulator | 15 scenario families, tuned on seeds 1 to 10, reported on held-out seeds 101 to 150 | `uv run python runner.py --seeds holdout --target local` | 750/750 scenarios, all thresholds met |
 | Metamorphic | Same scenario shuffled, re-spelled, other time offsets, junk mixed in | `uv run python metamorphic.py --seeds holdout --target local` | 1,600/1,600 identical |
 | Privacy scanners | Replies, logs, database, wording, hardcoding | `uv run python -m scanners.all --target local` | 0 findings |
-| Evaluation datasets | 5 fixed PRD-format datasets (tricks, real scams, verified and disputes, map and alerts, a judging-day mix), scored per PRD row | `uv run python score_dataset.py --target local` | 119/119 checks |
+| Evaluation datasets | 5 fixed PRD-format datasets (tricks, real scams, verified and disputes, map and alerts, a judging-day mix), scored per PRD row | `uv run python score_dataset.py --target local` | 121/121 checks |
 | Robustness | Fuzzed bodies and queries, 50 concurrent reports | in the API tests | no 5xx, exact counts |
 | Performance | 100k reports, 2,000 lookups, 500 reports | `uv run python perf.py --target <url>` | see [docs/RESULTS.md](docs/RESULTS.md) |
 | UI | Every screen in English, Hindi and icon-only mode | `cd web && uv run pytest` | 180 tests |
@@ -182,10 +182,19 @@ docs/     PRD, spec, architecture, decisions, results, setup
 
 ## Known limits
 
+- **"Verified business" means "on the organisers' list", nothing more.** It is an exact match against the 19 values
+  in PRD Appendix C (`shared/data/verified.json`). The app does not check anyone's identity: nobody can become
+  verified through it, and a dispute never adds a number to the list. Callers can fake any number, which the result
+  screen says. Real verification would need a registry or proof per type (see DECISIONS D61).
+- **One dispute per number.** A second dispute on the same number gets `429`, so it cannot be spammed.
+- **Nothing older than 30 days is shown as an alert or activity.** Such a report is still accepted and counted
+  (the map can show it with a wider window); it just never appears in the live panel.
+
 - **40 friends writing their own words over days** cannot be told apart from a real campaign (see above).
 - **Device id per session.** The website's anonymous id lasts one browser session (DECISIONS D57); a returning
   visitor on another network counts as a new reporter.
 - **One API machine.** SQLite on one volume means one machine; fine for this load (see performance), but scaling
   out would mean moving to Postgres.
-- **Hosted on a laptop** (DECISIONS D59). The PRD scores the server row on a public HTTPS address; see
-  [infra/README.md](infra/README.md) for how a tunnel could provide one.
+- **Hosted on a laptop, reached over the Wi-Fi** (DECISIONS D59, D62). The judges curl `http://<laptop address>:8000`
+  from the same network; the address is plain `http`, and the PRD's example is HTTPS. Windows Firewall needs the
+  two ports opened ([infra/README.md](infra/README.md)).

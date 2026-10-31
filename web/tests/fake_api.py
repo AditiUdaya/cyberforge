@@ -106,9 +106,12 @@ EVENTS = [
 
 
 class FakeApi:
-    def __init__(self, *, expired: bool = False, report_status: int = 201) -> None:
+    def __init__(
+        self, *, expired: bool = False, report_status: int = 201, challenge_status: int = 201
+    ) -> None:
         self.expired = expired
         self.report_status = report_status
+        self.challenge_status = challenge_status
         self.reports: list[dict[str, Any]] = []
         self.challenges: list[dict[str, Any]] = []
         self.uploaded: list[dict[str, Any]] = []
@@ -156,6 +159,8 @@ class FakeApi:
 
     def challenge(self, body: dict[str, Any]) -> dict[str, Any]:
         self._gate()
+        if self.challenge_status != 201:
+            raise ApiError(self.challenge_status, "refused")
         self.challenges.append(body)
         return {"challenge_id": "chl_1", "status": "under_review"}
 

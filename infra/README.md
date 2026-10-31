@@ -77,8 +77,41 @@ scripts/license_demo.sh http://127.0.0.1:8000 licence-5min.json licence-long.jso
 Logs go to the terminal (Option 1) or `docker logs scam-map-api` (Option 2). By design there is no per-request log:
 no URLs, query strings, identifiers or reporter fields are ever logged.
 
-## Judging
+## Judging: other machines on the same Wi-Fi
 
-The PRD scores the server row on a public HTTPS address; a laptop-only server scores zero on that row. If that
-is needed later, a tunnel in front of the local API (for example Cloudflare Tunnel or ngrok) gives one without a
-cloud host. That is not set up here.
+`scripts/run_local.sh` listens on all network interfaces and prints the address at startup, for example:
+
+```text
+== On this Wi-Fi (judges, phones): API http://192.168.60.86:8000   website http://192.168.60.86:8501
+   try from another machine:  curl http://192.168.60.86:8000/health
+```
+
+Judges reach the API at `http://<that address>:8000`, with the routes from PRD Appendix A, and the website at
+`http://<that address>:8501`. Check from a second device on the same Wi-Fi first:
+
+```bash
+curl http://192.168.60.86:8000/health
+```
+
+**1. Allow the ports in Windows Firewall.** If the Wi-Fi is classed as Public (see it with `Get-NetConnectionProfile`),
+Windows blocks incoming connections. Open PowerShell **as administrator** and allow just these two ports, only from
+machines on your own subnet:
+
+```powershell
+New-NetFirewallRule -DisplayName "Scam Map (judges)" -Direction Inbound -Protocol TCP -LocalPort 8000,8501 -Action Allow -RemoteAddress LocalSubnet -Profile Any
+```
+
+Remove the rule when judging is over:
+
+```powershell
+Remove-NetFirewallRule -DisplayName "Scam Map (judges)"
+```
+
+**2. Know the limits.**
+- The address changes if the laptop gets a new one from the router: read it again from the startup banner.
+- Some Wi-Fi networks block devices from talking to each other (client isolation). If a second device cannot connect
+  even with the rule, ask the organisers, or use a phone hotspot that both devices join.
+- The API has no login on `POST /admin/reset` and `POST /license`, as the PRD requires, so anyone on the network can
+  reset it. Keep the laptop on a Wi-Fi you trust while judging, and turn the rule off afterwards.
+- The address is `http`, not `https`. The PRD's example is HTTPS; on a private Wi-Fi the judges' tool should accept
+  `http`, so check with the organisers.

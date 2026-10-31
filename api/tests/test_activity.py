@@ -11,6 +11,7 @@ from typing import Any
 
 from fastapi.testclient import TestClient
 
+from app.clock import FixedClock
 from tests.conftest import START
 
 NUMBER = "+91 98765 43210"
@@ -163,3 +164,49 @@ def test_events_never_hold_a_raw_number_or_reporter_field(
     raw = b"".join(p.read_bytes() for p in db_path.parent.glob(db_path.name + "*"))
     for secret in ("9876543210", "r_1", "10.1.1", "own words"):
         assert secret.encode() not in raw, secret
+
+
+def test_reports_older_than_30_days_are_accepted_but_never_shown(client: TestClient) -> None:
+    old = (START - timedelta(days=45)).isoformat()
+    for n in range(6):
+        sent = body(n, identifier_value=f"9{n:09d}", occurred_at=old)
+        assert client.post("/reports", json=sent).status_code == 201
+    looked_up = client.get("/lookup", params={"type": "phone", "value": "9000000000"}).json()
+    assert looked_up["report_count"] == 1
+    assert activity(client) == {"events": [], "alerts": []}
+
+
+def test_a_29_day_old_report_is_shown_then_ages_out(client: TestClient, clock: FixedClock) -> None:
+    client.post("/reports", json=body(1, occurred_at=(START - timedelta(days=29)).isoformat()))
+    assert kinds(client) == ["report"]
+    clock.advance(timedelta(days=2))
+    assert activity(client) == {"events": [], "alerts": []}
+
+
+def test_old_junk_and_rate_limits_are_not_shown(client: TestClient) -> None:
+    old = (START - timedelta(days=45)).isoformat()
+    client.post("/reports", json=body(1, occurred_at=old, pincode="999999"))
+    for n in range(5):
+        client.post(
+            "/reports", json=body(n, reporter_id="r_spam", report_id=f"s{n}", occurred_at=old)
+        )
+    assert activity(client)["events"] == []
+
+
+def test_a_burst_of_old_reports_is_not_shown(client: TestClient) -> None:
+    old = (START - timedelta(days=40)).isoformat()
+    for n in range(20):
+        client.post(
+            "/reports",
+            json=body(
+                n, identifier_value="+91 80 4555 0123", ip_prefix="1.2.3", note="", occurred_at=old
+            ),
+        )
+    assert activity(client)["events"] == []
+
+
+def test_recent_reports_still_show_beside_old_ones(client: TestClient) -> None:
+    client.post("/reports", json=body(1, occurred_at=(START - timedelta(days=45)).isoformat()))
+    client.post("/reports", json=body(2, identifier_value="+91 91234 56780"))
+    events = activity(client)["events"]
+    assert [e["display"] for e in events] == ["91XXXXX780"]

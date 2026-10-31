@@ -80,3 +80,33 @@ def test_expired_licence_shows_in_the_panel_too() -> None:
 def test_no_reporter_detail_can_appear() -> None:
     for e in EVENTS:
         assert not {"reporter_id", "ip_prefix", "note"} & set(e)
+
+
+def test_a_new_type_alert_says_reported_suspicious_activity() -> None:
+    api = FakeApi()
+    api.live_alerts = [
+        {
+            "type": "NEW_TYPE",
+            "pincode": "560037",
+            "scam_type": "fake-kyc-link",
+            "window": "24h",
+            "locality": "Marathahalli",
+        },
+    ]
+    text = shown(screen("how", api))
+    assert "Marathahalli: reported suspicious activity, Fake KYC link" in text
+    assert "new kind of scam" not in text.lower()
+
+
+def test_hindi_new_type_alert() -> None:
+    api = FakeApi()
+    api.live_alerts = [
+        {
+            "type": "NEW_TYPE",
+            "pincode": "560037",
+            "scam_type": "fake-kyc-link",
+            "window": "24h",
+            "locality": "Marathahalli",
+        },
+    ]
+    assert "संदिग्ध गतिविधि की रिपोर्ट" in shown(screen("how", api, lang="hi"))

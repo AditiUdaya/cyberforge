@@ -5,6 +5,9 @@ and alert becomes an event. Identifiers appear only masked; no reporter or conne
 ever recorded; rejections keep their reason, never the value sent. Repeats, bursts, rejections
 and rate limits within an hour are grouped into one event whose count grows.
 
+Nothing older than 30 days is ever shown: a report whose incident is that old records no event
+at all, and an event stops appearing once its incident turns 30 days old.
+
 Owner: B. Filled in by: B9.
 """
 
@@ -25,6 +28,12 @@ from app.core.verdict import CaseFacts, verdict
 
 GROUP_WINDOW = timedelta(hours=1)
 FEED_LIMIT = 40
+MAX_AGE = timedelta(days=30)
+
+
+def too_old(when: datetime, now: datetime) -> bool:
+    """True when the incident is 30 days old or more, so it must not show as activity."""
+    return when <= now - MAX_AGE
 
 
 @dataclass(frozen=True)
@@ -32,6 +41,7 @@ class Context:
     """What an event may say about a report: area, type, channel and the masked identifier."""
 
     at: datetime
+    occurred: datetime | None = None  # when the incident happened; defaults to `at`
     pincode: str | None = None
     scam_type: str | None = None
     channel: str | None = None
@@ -56,6 +66,7 @@ def record(
 ) -> None:
     """Add an event, or with group=True grow the matching one from the last hour."""
     at = to_utc_text(ctx.at)
+    occurred = to_utc_text(ctx.occurred or ctx.at)
     if group:
         since = to_utc_text(ctx.at - GROUP_WINDOW)
         row = conn.execute(
@@ -65,13 +76,14 @@ def record(
         ).fetchone()
         if row is not None:
             conn.execute(
-                "UPDATE events SET at = ?, count = COALESCE(?, count + 1) WHERE id = ?",
-                (at, count, row["id"]),
+                "UPDATE events SET at = ?, count = COALESCE(?, count + 1),"
+                " occurred_at = MAX(occurred_at, ?) WHERE id = ?",
+                (at, count, occurred, row["id"]),
             )
             return
     conn.execute(
         "INSERT INTO events (at, kind, pincode, scam_type, channel, identifier_type, display,"
-        " case_id, detail, count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        " case_id, detail, count, occurred_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             at,
             kind,
@@ -83,6 +95,7 @@ def record(
             ctx.case_id,
             detail,
             count or 1,
+            occurred,
         ),
     )
 
@@ -135,11 +148,11 @@ def _new_alerts(conn: sqlite3.Connection, ctx: Context, pincode: str) -> None:
 
 
 def feed(conn: sqlite3.Connection, now: datetime) -> dict[str, list[dict[str, Any]]]:
-    """The newest events, and the alerts live right now in every area."""
+    """The newest events from the last 30 days, and the alerts live right now in every area."""
     rows = conn.execute(
         "SELECT at, kind, pincode, scam_type, channel, identifier_type, display, detail, count"
-        " FROM events ORDER BY at DESC, id DESC LIMIT ?",
-        (FEED_LIMIT,),
+        " FROM events WHERE occurred_at > ? ORDER BY at DESC, id DESC LIMIT ?",
+        (to_utc_text(now - MAX_AGE), FEED_LIMIT),
     ).fetchall()
     known = areas()
     events = [

@@ -123,8 +123,8 @@ STRINGS: dict[str, dict[Lang, str]] = {
         "hi": "आज आस-पास स्कैम रिपोर्ट बढ़ीं: 24 घंटे में {count}, आमतौर पर रोज़ लगभग {base}।",
     },
     "alert_new": {
-        "en": "A new kind of scam near you: {kind}",
-        "hi": "आस-पास नए तरह का स्कैम: {kind}",
+        "en": "Reported suspicious activity near you: {kind}",
+        "hi": "आस-पास संदिग्ध गतिविधि की रिपोर्ट: {kind}",
     },
     "no_alerts": {
         "en": "No alerts. Nothing unusual right now.",
@@ -154,6 +154,10 @@ STRINGS: dict[str, dict[Lang, str]] = {
     "challenge_ok": {
         "en": "Thank you. It is now marked as under review.",
         "hi": "धन्यवाद। इसे अब जांच में दिखाया जा रहा है।",
+    },
+    "challenge_limit": {
+        "en": "A dispute is already under review for this number. Only one is allowed per number.",
+        "hi": "इस नंबर के लिए आपत्ति पहले से जांच में है। हर नंबर पर सिर्फ़ एक आपत्ति दी जा सकती है।",
     },
     "challenge_missing": {"en": "Please fill in every field.", "hi": "कृपया हर जानकारी भरें।"},
     # Licence
@@ -191,8 +195,8 @@ STRINGS: dict[str, dict[Lang, str]] = {
         "hi": "{area}: 24 घंटे में {count} रिपोर्ट, आमतौर पर रोज़ लगभग {base}",
     },
     "alert_new_short": {
-        "en": "{area}: a new kind of scam, {kind}",
-        "hi": "{area}: नए तरह का स्कैम, {kind}",
+        "en": "{area}: reported suspicious activity, {kind}",
+        "hi": "{area}: संदिग्ध गतिविधि की रिपोर्ट, {kind}",
     },
     "ev_report": {"en": "Report counted", "hi": "रिपोर्ट गिनी गई"},
     "ev_merged": {

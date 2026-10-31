@@ -43,7 +43,7 @@ Notes on that run against https://scam-map-api-shubhang.fly.dev (Fly.io, Singapo
 ## Evaluation datasets, local, 31 Oct
 
 `judge/score_dataset.py` loaded the five datasets in `judge/datasets/` (902 PRD-format reports, 4 disputes) into
-the local server and scored them: **119/119 checks passed**, an estimated 82.0 of the 85 points the datasets can
+the local server and scored them: **119/119 checks passed** (121/121 after the live panel added two), an estimated 82.0 of the 85 points the datasets can
 measure (rows 6 and 7 are judged by people).
 
 | Dataset | Reports | Checks |

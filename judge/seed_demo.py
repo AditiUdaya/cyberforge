@@ -4,7 +4,7 @@
 
 Resets the server first. Uses the simulator's own scenarios, so the data shows exactly what the
 trust rules do: a real campaign becomes a known scam, 40 friends bombing a bakery do not, one area
-has a spike, another a new kind of scam. Never point it at the server the judges use.
+has a spike, another reported suspicious activity. Never point it at the server the judges use.
 
 Owner: B. Filled in by: B9.
 """
@@ -91,12 +91,12 @@ def main(argv: list[str] | None = None) -> int:
             post_all(client, s)
             tries.append((kind, raw, "reported by 5 people"))
 
-        # Steady traffic around Bengaluru, a spike in Koramangala, a new kind of scam in HSR.
+        # Steady traffic around Bengaluru, a spike in Koramangala, suspicious activity in HSR.
         g = Gen("demo-areas", 6, "demo", now)
         traffic = g.scenario("traffic")
         # Each area has its own mix of scam types, as real areas do. Sextortion is kept out of the
-        # mix so it can show up as HSR Layout's new kind of scam, and Koramangala's spike reuses
-        # types it has already seen so it raises a SPIKE without a NEW_TYPE as well.
+        # mix so it can show up as HSR Layout's reported suspicious activity, and Koramangala's
+        # spike reuses types it has already seen so it raises a SPIKE without a NEW_TYPE as well.
         background = [t for t in scam_types() if t != NEW_KIND]
         bengaluru = sorted(p for p, a in areas().items() if a["city"] == "Bengaluru")
         mixes: dict[str, list[str]] = {}
@@ -126,7 +126,7 @@ def main(argv: list[str] | None = None) -> int:
                 if alert["type"] == "SPIKE":
                     detail = f"{alert['count']} today, about {alert['baseline_per_day']}/day before"
                 else:
-                    detail = f"new kind of scam: {alert['scam_type']}"
+                    detail = f"reported suspicious activity: {alert['scam_type']}"
                 print(f"  {areas()[pincode]['locality']:<16} {alert['type']:<9} {detail}")
     return 0
 
