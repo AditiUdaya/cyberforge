@@ -44,7 +44,7 @@ fly apps create <api name>
 ```
 
 ```powershell
-fly volumes create scam_map_data --region bom --size 1 --app <api name> --yes
+fly volumes create scam_map_data --region sin --size 1 --app <api name> --yes
 ```
 
 The HMAC key turns reporter ids, IP prefixes and identifiers into keyed hashes. Never change it after reports

@@ -3,8 +3,8 @@
 # Change `app` to a unique name; the address becomes https://<app>.fly.dev.
 # Owner: A. Filled in by: A0.
 
-app = "scam-map-api"
-primary_region = "bom"
+app = "scam-map-api-shubhang"
+primary_region = "sin"
 
 [env]
   SCAM_MAP_DB_PATH = "/data/scam_map.sqlite"

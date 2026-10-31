@@ -3,11 +3,11 @@
 # Change `app` to a unique name and SCAM_MAP_API_URL to the API's address.
 # Owner: A. Filled in by: A0.
 
-app = "scam-map-web"
-primary_region = "bom"
+app = "scam-map-web-shubhang"
+primary_region = "sin"
 
 [env]
-  SCAM_MAP_API_URL = "https://scam-map-api.fly.dev"
+  SCAM_MAP_API_URL = "https://scam-map-api-shubhang.fly.dev"
   PORT = "8501"
 
 [http_service]
