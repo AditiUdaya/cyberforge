@@ -18,6 +18,7 @@ dev = [
   "ruff==0.17.3",
   "mypy==2.4.1",
   "pip-audit==2.10.1",
+  "pytest==9.2.0",
 ]
 
 [tool.ruff]
@@ -30,6 +31,10 @@ select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
 [tool.ruff.lint.per-file-ignores]
 # contract.py starts the local API with a fixed argument list (no shell, no user input).
 "contract.py" = ["S603"]
+# The simulator needs reproducible seeded randomness, not cryptographic randomness.
+"generator.py" = ["S311"]
+"metamorphic.py" = ["S311"]
+"tests/**" = ["S101"]
 
 [tool.mypy]
 strict = true

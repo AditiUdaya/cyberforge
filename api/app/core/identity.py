@@ -44,6 +44,10 @@ class Keyring:
     def ip_prefix(self, prefix: str) -> str:
         return self.digest("ip", prefix.strip())
 
+    def note_key(self) -> bytes:
+        """A separate key for note fingerprints, so sketches are useless without the secret."""
+        return hmac.new(self._key, b"notes", hashlib.sha256).digest()
+
 
 def connection_prefix(host: str | None) -> str:
     """The /24 of an IPv4 address or the /48 of an IPv6 address; never the full address."""
