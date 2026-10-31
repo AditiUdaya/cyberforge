@@ -14,7 +14,7 @@ from typing import Literal
 from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.routes.reports import IdentifierType
+from app.core.normalise import IdentifierType
 
 router = APIRouter()
 

@@ -4,14 +4,16 @@ Every reply is checked against shared/contract/*.schema.json, which copies PRD A
 The checks talk only HTTP, so the same list runs against the in-process app (api tests),
 a local server (--target local) or the deployed HTTPS address (--target https://...).
 
-Owner: B. Filled in by: B1.
+Owner: B. Filled in by: B1 (shape), B2 and B3 (behaviour).
 """
 
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import os
+import secrets
 import shutil
 import socket
 import subprocess
@@ -21,9 +23,12 @@ import time
 from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Protocol
 
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from jsonschema import Draft202012Validator
 
 REPO = Path(__file__).resolve().parent.parent
@@ -283,6 +288,138 @@ def _no_echo_in_errors(c: Client) -> None:
         raise AssertionError("lookup error message echoes the query")
 
 
+# Behaviour the PRD's test tool checks (tasks B2 and B3). Fresh random identifiers keep these
+# checks independent of whatever else is on the server.
+
+
+def _random_mobile() -> str:
+    return secrets.choice("6789") + "".join(secrets.choice("0123456789") for _ in range(9))
+
+
+def _ago(days: float) -> str:
+    return (datetime.now(UTC) - timedelta(days=days)).isoformat()
+
+
+def _person(n: int, run_id: str) -> dict[str, Any]:
+    """Fields that make report n come from a different, unrelated person."""
+    return {
+        "report_id": f"rep_{run_id}_{n}",
+        "reporter_id": f"r_{run_id}_{n}",
+        "ip_prefix": f"10.{n}.{secrets.randbelow(250)}",
+        "note": f"Caller {n} said something different, in my own words {secrets.token_hex(6)}",
+        "occurred_at": _ago(n + 0.5),
+    }
+
+
+@check("GET /license shows a valid licence")
+def _license_valid(c: Client) -> None:
+    body = expect(c.get("/license"), 200, "license_get.reply")
+    if body["valid"] is not True:
+        raise AssertionError(f"licence not valid: {body}")
+
+
+@check("An unreported number is 200 NO_REPORTS and masked")
+def _unreported(c: Client) -> None:
+    digits = _random_mobile()
+    body = expect(c.get("/lookup", params={"type": "phone", "value": digits}), 200, "lookup.reply")
+    if body["verdict"] != "NO_REPORTS" or body["report_count"] != 0:
+        raise AssertionError(f"want NO_REPORTS with 0 reports, got {body['verdict']}")
+    if digits in body["display_value"]:
+        raise AssertionError("display_value is not masked")
+
+
+@check("Junk identifiers like 12345 and test are 400 on lookup and report")
+def _junk(c: Client) -> None:
+    for kind, value in [("phone", "12345"), ("phone", "test"), ("upi", "test"), ("url", "test")]:
+        expect(c.get("/lookup", params={"type": kind, "value": value}), 400, "error")
+        sent = PRD_REPORT | {"identifier_type": kind, "identifier_value": value}
+        expect(c.post("/reports", json=sent), 400, "error")
+
+
+@check("Unknown pincode, future time and time without offset are 400")
+def _bad_report_fields(c: Client) -> None:
+    for change in [
+        {"pincode": "999999"},
+        {"occurred_at": (datetime.now(UTC) + timedelta(days=2)).isoformat()},
+        {"occurred_at": "2026-10-27T18:21:04"},
+    ]:
+        try:
+            expect(c.post("/reports", json=PRD_REPORT | change), 400, "error")
+        except AssertionError as e:
+            raise AssertionError(f"{change}: {e}") from e
+
+
+@check("Every PRD format of one number lands in one case")
+def _formats(c: Client) -> None:
+    run_id = secrets.token_hex(4)
+    d = _random_mobile()
+    a, b = d[:5], d[5:]
+    sent = PRD_REPORT | _person(1, run_id) | {"identifier_value": f"+91 {a} {b}"}
+    first = expect(c.post("/reports", json=sent), 201, "reports.reply")
+    sent = PRD_REPORT | _person(2, run_id) | {"identifier_value": f"{a}-{b}"}
+    second = expect(c.post("/reports", json=sent), 201, "reports.reply")
+    if first["merged"] or not second["merged"] or first["case_id"] != second["case_id"]:
+        raise AssertionError(f"reports did not merge into one case: {first} {second}")
+    for value in [f"+91 {a} {b}", f"0{d}", f"{a}-{b}", f"91{d}"]:
+        body = expect(
+            c.get("/lookup", params={"type": "phone", "value": value}), 200, "lookup.reply"
+        )
+        if body["report_count"] != 2:
+            raise AssertionError(f"{value!r}: report_count {body['report_count']}, want 2")
+
+
+@check("Masked below 3 different people, shown in full at 3")
+def _masking(c: Client) -> None:
+    run_id = secrets.token_hex(4)
+    d = _random_mobile()
+    for n in (1, 2, 3):
+        sent = PRD_REPORT | _person(n, run_id) | {"identifier_value": d}
+        expect(c.post("/reports", json=sent), 201, "reports.reply")
+        body = expect(c.get("/lookup", params={"type": "phone", "value": d}), 200, "lookup.reply")
+        want = f"+91{d}" if n == 3 else f"{d[:2]}XXXXX{d[-3:]}"
+        if body["display_value"] != want:
+            raise AssertionError(f"after {n} people: {body['display_value']!r}, want {want!r}")
+
+
+@check("One person reporting many times is one distinct reporter")
+def _one_person(c: Client) -> None:
+    run_id = secrets.token_hex(4)
+    d = _random_mobile()
+    for n in (1, 2, 3):
+        sent = PRD_REPORT | _person(1, run_id) | {"report_id": f"rep_{run_id}_x{n}"}
+        response = c.post("/reports", json=sent | {"identifier_value": d})
+        if response.status_code not in (201, 429):
+            raise AssertionError(f"status {response.status_code}, want 201 or 429")
+    body = expect(c.get("/lookup", params={"type": "phone", "value": d}), 200, "lookup.reply")
+    if body["distinct_reporters"] != 1 or body["verdict"] == "KNOWN_SCAM":
+        raise AssertionError(
+            f"one person counted as {body['distinct_reporters']}: {body['verdict']}"
+        )
+
+
+@check("Every Appendix C value is VERIFIED_BUSINESS")
+def _verified(c: Client) -> None:
+    doc = json.loads((REPO / "shared" / "data" / "verified.json").read_text(encoding="utf-8"))
+    for item in doc["items"]:
+        params = {"type": item["type"], "value": item["value"]}
+        body = expect(c.get("/lookup", params=params), 200, "lookup.reply")
+        if body["verdict"] != "VERIFIED_BUSINESS":
+            raise AssertionError(f"{item['value']!r} is {body['verdict']}")
+
+
+@check("Reset empties every lookup and keeps the licence")
+def _reset_empties(c: Client) -> None:
+    d = _random_mobile()
+    sent = PRD_REPORT | _person(1, secrets.token_hex(4)) | {"identifier_value": d}
+    expect(c.post("/reports", json=sent), 201, "reports.reply")
+    expect(c.post("/admin/reset"), 200, "admin_reset.reply")
+    body = expect(c.get("/lookup", params={"type": "phone", "value": d}), 200, "lookup.reply")
+    if body["verdict"] != "NO_REPORTS":
+        raise AssertionError(f"after reset: {body['verdict']}")
+    if expect(c.get("/license"), 200, "license_get.reply")["valid"] is not True:
+        raise AssertionError("reset removed the licence")
+
+
 def run(client: Client) -> list[Result]:
     results = []
     for name, fn in CHECKS:
@@ -311,8 +448,19 @@ def local_server() -> Iterator[str]:
     """
     python = _api_python()
     port = _free_port()
+    signing_key = Ed25519PrivateKey.generate()
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
-        env = os.environ | {"SCAM_MAP_DB_PATH": str(Path(tmp) / "contract.sqlite")}
+        public_pem = Path(tmp) / "public_key.pem"
+        public_pem.write_bytes(
+            signing_key.public_key().public_bytes(
+                serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo
+            )
+        )
+        env = os.environ | {
+            "SCAM_MAP_DB_PATH": str(Path(tmp) / "contract.sqlite"),
+            "SCAM_MAP_HMAC_KEY": secrets.token_hex(32),
+            "SCAM_MAP_LICENSE_PUBLIC_KEY": str(public_pem),
+        }
         args = [
             str(python),
             "-m",
@@ -328,10 +476,32 @@ def local_server() -> Iterator[str]:
         try:
             base = f"http://127.0.0.1:{port}"
             _wait_ready(base, proc)
+            _install_licence(base, signing_key)
             yield base
         finally:
             proc.terminate()
             proc.wait(timeout=10)
+
+
+def _install_licence(base: str, key: Ed25519PrivateKey) -> None:
+    """Sign and upload a one-day licence, exactly as scripts/license_sign.py would."""
+    import httpx
+
+    expires_at = (datetime.now(UTC) + timedelta(days=1)).isoformat()
+    canonical = json.dumps(
+        {"licensee": "Contract tests", "expires_at": expires_at},
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode()
+    licence = {
+        "licensee": "Contract tests",
+        "expires_at": expires_at,
+        "signature": base64.b64encode(key.sign(canonical)).decode(),
+    }
+    response = httpx.post(f"{base}/license", json=licence, timeout=10)
+    if response.status_code != 200:
+        raise SystemExit(f"local server refused the test licence: {response.text}")
 
 
 def _api_python() -> Path:

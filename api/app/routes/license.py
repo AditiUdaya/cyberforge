@@ -1,19 +1,23 @@
 """GET /license and POST /license: show the licence;
 verify and hot-swap a new one without a restart.
-Both work when expired. Stub in B1.
-
-B1 stub: no licence is loaded, and every upload is refused because nothing can verify it yet.
+Both work when expired.
 
 Owner: B. Filled in by: B3.
 """
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+from typing import Annotated, cast
+
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
+from app.clock import Clock
+from app.deps import get_clock
 from app.errors import error_response
+from app.license.state import LicenceState
+from app.license.verify import InvalidLicence
 
 router = APIRouter()
 
@@ -30,11 +34,34 @@ class LicenseOut(BaseModel):
     valid: bool
 
 
+def get_licence_state(request: Request) -> LicenceState:
+    return cast(LicenceState, request.app.state.licence)
+
+
 @router.get("/license")
-def get_license() -> LicenseOut:
-    return LicenseOut(licensee=None, expires_at=None, valid=False)
+def get_license(
+    state: Annotated[LicenceState, Depends(get_licence_state)],
+    clock: Annotated[Clock, Depends(get_clock)],
+) -> LicenseOut:
+    valid = state.is_valid(clock.now())
+    licence = state.licence
+    if licence is None:
+        return LicenseOut(licensee=None, expires_at=None, valid=False)
+    return LicenseOut(licensee=licence.licensee, expires_at=licence.expires_at_text, valid=valid)
 
 
 @router.post("/license", response_model=LicenseOut)
-def post_license(licence: LicenseIn) -> JSONResponse:
-    return error_response(400, "signature could not be verified")
+def post_license(
+    body: LicenseIn,
+    state: Annotated[LicenceState, Depends(get_licence_state)],
+    clock: Annotated[Clock, Depends(get_clock)],
+) -> LicenseOut | JSONResponse:
+    try:
+        licence = state.install(body.model_dump(), clock.now())
+    except InvalidLicence as e:
+        return error_response(400, str(e))
+    return LicenseOut(
+        licensee=licence.licensee,
+        expires_at=licence.expires_at_text,
+        valid=state.is_valid(clock.now()),
+    )
