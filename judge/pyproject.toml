@@ -34,6 +34,7 @@ select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
 # The simulator needs reproducible seeded randomness, not cryptographic randomness.
 "generator.py" = ["S311"]
 "metamorphic.py" = ["S311"]
+"perf.py" = ["S311"]
 "tests/**" = ["S101"]
 
 [tool.mypy]

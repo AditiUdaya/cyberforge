@@ -21,6 +21,7 @@ echo "== Judge (in-process, held-out seeds)"
   uv sync --frozen
   uv run ruff check .
   uv run mypy --strict .
+  uv run pytest -q -W error
   uv run python contract.py --target local
   uv run python runner.py --seeds holdout --target local --fail-under-thresholds
   uv run python -m scanners.all --target local
