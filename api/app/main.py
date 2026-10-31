@@ -24,6 +24,7 @@ from app.migrate import apply_migrations
 from app.routes import (
     admin,
     alerts,
+    app_activity,
     app_areas,
     challenges,
     health,
@@ -77,6 +78,7 @@ def create_app(
         challenges,
         license,
         app_areas,
+        app_activity,
     )
     for route in routes:
         app.include_router(route.router)

@@ -28,8 +28,8 @@ website on :8501, loads a licence signed with your key, fills in demo data and p
 scripts/run_local.sh
 ```
 
-Add `--keep` to start with the data already in `.local/` instead of fresh demo data. The steps below do the same by
-hand.
+Next time it keeps everything you entered; `--fresh` clears it all and reloads demo data. The steps below do the
+same by hand.
 
 ```bash
 git clone <repo-url> scam-map && cd scam-map
@@ -160,6 +160,7 @@ check every reply, every server log line and the raw database bytes for anything
 | Judge simulator | 15 scenario families, tuned on seeds 1 to 10, reported on held-out seeds 101 to 150 | `uv run python runner.py --seeds holdout --target local` | 750/750 scenarios, all thresholds met |
 | Metamorphic | Same scenario shuffled, re-spelled, other time offsets, junk mixed in | `uv run python metamorphic.py --seeds holdout --target local` | 1,600/1,600 identical |
 | Privacy scanners | Replies, logs, database, wording, hardcoding | `uv run python -m scanners.all --target local` | 0 findings |
+| Evaluation datasets | 5 fixed PRD-format datasets (tricks, real scams, verified and disputes, map and alerts, a judging-day mix), scored per PRD row | `uv run python score_dataset.py --target local` | 119/119 checks |
 | Robustness | Fuzzed bodies and queries, 50 concurrent reports | in the API tests | no 5xx, exact counts |
 | Performance | 100k reports, 2,000 lookups, 500 reports | `uv run python perf.py --target <url>` | see [docs/RESULTS.md](docs/RESULTS.md) |
 | UI | Every screen in English, Hindi and icon-only mode | `cd web && uv run pytest` | 180 tests |

@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
-from app import store
+from app import activity, store
 from app.clock import Clock
 from app.core.identity import Keyring
 from app.core.normalise import IdentifierType, InvalidIdentifier, normalise
@@ -61,4 +61,10 @@ def create_challenge(
             proof_note=body.proof_note.strip(),
             created=to_utc_text(clock.now()),
         )
+        where = activity.Context(
+            at=clock.now(),
+            identifier_type=body.identifier_type,
+            display=activity.masked(body.identifier_type, normalised),
+        )
+        activity.record(conn, "dispute", where)
     return ChallengeOut(challenge_id=challenge_id, status="under_review")

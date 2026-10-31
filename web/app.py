@@ -12,7 +12,7 @@ import streamlit as st
 from scam_web.i18n import PAGE_ICONS
 from scam_web.ui import PAGES, tr
 
-st.set_page_config(page_title=tr("app_title"), page_icon="🛡️", layout="centered")
+st.set_page_config(page_title=tr("app_title"), page_icon="🛡️", layout="wide")
 
 navigation = st.navigation(
     [

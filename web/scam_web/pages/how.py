@@ -7,7 +7,9 @@ from __future__ import annotations
 
 import streamlit as st
 
-from scam_web.ui import header, tr
+from scam_web.panel import page
+from scam_web.ui import tr
 
-header("how")
-st.markdown(tr("how_body"))
+main = page("how")
+with main:
+    st.markdown(tr("how_body"))
