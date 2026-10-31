@@ -1,0 +1,14 @@
+{
+  "_about": "Allowlist of short phone codes accepted as written (ARCHITECTURE 'Normalisation rules': short helplines). Kept here so no number is hardcoded in api/app. Owner: B drafts, A reviews. Filled in by: B1.",
+  "items": [
+    {"value": "1930", "name": "National Cybercrime Helpline"},
+    {"value": "1909", "name": "TRAI Do Not Disturb"},
+    {"value": "112", "name": "National emergency number"},
+    {"value": "100", "name": "Police"},
+    {"value": "101", "name": "Fire"},
+    {"value": "102", "name": "Ambulance"},
+    {"value": "108", "name": "Emergency ambulance"},
+    {"value": "1098", "name": "Childline"},
+    {"value": "181", "name": "Women helpline"}
+  ]
+}

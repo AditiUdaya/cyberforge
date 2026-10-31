@@ -1,4 +1,11 @@
 {
-  "_about": "Report channels from PRD Appendix C. Owner: B drafts, A reviews. Filled in by: B1.",
-  "items": []
+  "_about": "Report channels from PRD Appendix C, spelled exactly as the test tool sends them. Owner: B drafts, A reviews. Filled in by: B1.",
+  "items": [
+    {"id": "Phone call"},
+    {"id": "SMS or WhatsApp"},
+    {"id": "QR code"},
+    {"id": "Fake website"},
+    {"id": "UPI request"},
+    {"id": "Something else"}
+  ]
 }

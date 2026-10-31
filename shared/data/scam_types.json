@@ -1,4 +1,18 @@
 {
-  "_about": "Scam types from PRD Appendix C; unknown values become other. Owner: B drafts, A reviews. Filled in by: B1.",
-  "items": []
+  "_about": "Scam types from PRD Appendix C. Any other value in a report is accepted and stored as other. Hindi labels are added in A3. Owner: B drafts, A reviews. Filled in by: B1.",
+  "items": [
+    {"id": "digital-arrest", "label_en": "Digital arrest video call: fake police say you are under arrest"},
+    {"id": "fake-kyc-link", "label_en": "Fake KYC update link that copies a bank's page"},
+    {"id": "upi-refund-qr", "label_en": "UPI refund QR scam: \"scan to receive\" actually sends money"},
+    {"id": "investment-group", "label_en": "WhatsApp investment group with fake profits"},
+    {"id": "courier-customs", "label_en": "Parcel held at customs, \"pay a fine\""},
+    {"id": "job-offer", "label_en": "Work-from-home task job that asks for deposits"},
+    {"id": "lottery-prize", "label_en": "Lottery or prize win that needs a fee"},
+    {"id": "loan-app-harassment", "label_en": "Instant loan app that threatens your contacts"},
+    {"id": "electricity-disconnection", "label_en": "\"Power cut tonight\" SMS"},
+    {"id": "fake-customer-care", "label_en": "Fake customer care number from a search result"},
+    {"id": "otp-call", "label_en": "OTP or card verification call"},
+    {"id": "sextortion", "label_en": "Video call extortion"},
+    {"id": "other", "label_en": "Something else"}
+  ]
 }

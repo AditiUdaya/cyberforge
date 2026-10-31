@@ -1,4 +1,24 @@
 {
-  "_about": "Verified values from PRD Appendix C: type, value, owner. Owner: B drafts, A reviews. Filled in by: B1.",
-  "items": []
+  "_about": "Verified values from PRD Appendix C, as written there; the API normalises them at load time. A lookup on any of these is always VERIFIED_BUSINESS. Owner: B drafts, A reviews. Filled in by: B1.",
+  "items": [
+    {"type": "phone", "value": "1930", "owner": "National Cybercrime Helpline"},
+    {"type": "phone", "value": "1909", "owner": "TRAI Do Not Disturb"},
+    {"type": "phone", "value": "1800 1600", "owner": "HDFC Bank customer care"},
+    {"type": "phone", "value": "1800 2600", "owner": "HDFC Bank customer care"},
+    {"type": "phone", "value": "1800 1080", "owner": "ICICI Bank customer care"},
+    {"type": "phone", "value": "1800 1234", "owner": "State Bank of India customer care"},
+    {"type": "phone", "value": "1800 2100", "owner": "State Bank of India customer care"},
+    {"type": "phone", "value": "1860 419 5555", "owner": "Axis Bank customer care"},
+    {"type": "phone", "value": "1860 266 2666", "owner": "Kotak Mahindra Bank customer care"},
+    {"type": "sender_id", "value": "HDFCBK", "owner": "HDFC Bank SMS sender"},
+    {"type": "sender_id", "value": "ICICIB", "owner": "ICICI Bank SMS sender"},
+    {"type": "sender_id", "value": "SBIINB", "owner": "State Bank of India SMS sender"},
+    {"type": "sender_id", "value": "AXISBK", "owner": "Axis Bank SMS sender"},
+    {"type": "sender_id", "value": "KOTAKB", "owner": "Kotak Mahindra Bank SMS sender"},
+    {"type": "url", "value": "https://cybercrime.gov.in", "owner": "National Cyber Crime Reporting Portal"},
+    {"type": "url", "value": "https://sancharsaathi.gov.in", "owner": "Sanchar Saathi"},
+    {"type": "phone", "value": "+91 80 4100 2233", "owner": "Fresh Bakes, Indiranagar (made up)"},
+    {"type": "phone", "value": "+91 80 2553 0190", "owner": "Koramangala Pharmacy (made up)"},
+    {"type": "upi", "value": "freshbakes@okaxis", "owner": "Fresh Bakes, Indiranagar (made up)"}
+  ]
 }

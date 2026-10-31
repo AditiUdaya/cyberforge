@@ -1,4 +1,27 @@
 {
-  "_about": "GET /lookup query parameters (type, value). Owner: B drafts, A reviews. Filled in by: B1.",
-  "$comment": "Filled in by B1 from PRD Appendix A"
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "lookup.request.schema.json",
+  "title": "lookup.request",
+  "_about": "GET /lookup query parameters; value is URL-encoded. Owner: B drafts, A reviews. Filled in by: B1 from PRD Appendix A.",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "phone",
+        "upi",
+        "url",
+        "sender_id"
+      ]
+    },
+    "value": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "type",
+    "value"
+  ],
+  "additionalProperties": true
 }

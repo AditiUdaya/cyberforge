@@ -1,4 +1,20 @@
 {
-  "_about": "POST /challenges 201 reply. Owner: B drafts, A reviews. Filled in by: B1.",
-  "$comment": "Filled in by B1 from PRD Appendix A"
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "challenges.reply.schema.json",
+  "title": "challenges.reply",
+  "_about": "POST /challenges 201 reply. Owner: B drafts, A reviews. Filled in by: B1 from PRD Appendix A.",
+  "type": "object",
+  "properties": {
+    "challenge_id": {
+      "type": "string"
+    },
+    "status": {
+      "const": "under_review"
+    }
+  },
+  "required": [
+    "challenge_id",
+    "status"
+  ],
+  "additionalProperties": true
 }

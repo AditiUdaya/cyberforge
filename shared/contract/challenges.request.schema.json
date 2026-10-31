@@ -1,4 +1,40 @@
 {
-  "_about": "POST /challenges request body. Owner: B drafts, A reviews. Filled in by: B1.",
-  "$comment": "Filled in by B1 from PRD Appendix A"
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "challenges.request.schema.json",
+  "title": "challenges.request",
+  "_about": "POST /challenges body (bonus feature). Owner: B drafts, A reviews. Filled in by: B1 from PRD Appendix A.",
+  "type": "object",
+  "properties": {
+    "identifier_type": {
+      "type": "string",
+      "enum": [
+        "phone",
+        "upi",
+        "url",
+        "sender_id"
+      ]
+    },
+    "identifier_value": {
+      "type": "string"
+    },
+    "claimant_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "contact_email": {
+      "type": "string",
+      "minLength": 3
+    },
+    "proof_note": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "identifier_type",
+    "identifier_value",
+    "claimant_name",
+    "contact_email",
+    "proof_note"
+  ],
+  "additionalProperties": true
 }

@@ -13,10 +13,12 @@ from pathlib import Path
 
 from fastapi import FastAPI
 
+from app import errors
 from app.clock import Clock, SystemClock
 from app.db import connect, db_path_from_env
 from app.migrate import apply_migrations
-from app.routes import health
+from app.routes import admin, alerts, app_areas, challenges, health, license, lookup, reports
+from app.routes import map as map_route
 
 
 def create_app(db_path: Path | None = None, clock: Clock | None = None) -> FastAPI:
@@ -40,7 +42,10 @@ def create_app(db_path: Path | None = None, clock: Clock | None = None) -> FastA
         openapi_url=None,
     )
     app.state.clock = clock if clock is not None else SystemClock()
-    app.include_router(health.router)
+    errors.install(app)
+    routes = (health, reports, lookup, map_route, alerts, admin, challenges, license, app_areas)
+    for route in routes:
+        app.include_router(route.router)
     return app
 
 

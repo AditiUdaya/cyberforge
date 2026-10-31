@@ -1,4 +1,28 @@
 {
-  "_about": "POST /license request body (licensee, expires_at, signature). Owner: B drafts, A reviews. Filled in by: B1.",
-  "$comment": "Filled in by B1 from PRD Appendix A"
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "license_post.request.schema.json",
+  "title": "license_post.request",
+  "_about": "POST /license body: the signed licence file. Owner: B drafts, A reviews. Filled in by: B1 from PRD Appendix A.",
+  "type": "object",
+  "properties": {
+    "licensee": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expires_at": {
+      "type": "string",
+      "minLength": 1,
+      "description": "ISO 8601 with an offset"
+    },
+    "signature": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "licensee",
+    "expires_at",
+    "signature"
+  ],
+  "additionalProperties": true
 }

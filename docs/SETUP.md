@@ -93,6 +93,23 @@ Sections for parts that are not built yet will fail until their task lands. Run 
 cd api && uv run ruff check . && uv run ruff format --check . && uv run mypy --strict app && uv run pytest -q -W error
 ```
 
+### Contract tests (PRD Appendix A)
+
+`judge/contract.py` sends the PRD's own example requests and checks every reply against
+`shared/contract/*.schema.json`. The same checks also run inside the API's pytest suite.
+
+Against a throwaway local server that it starts and stops itself:
+
+```bash
+cd judge && uv sync --frozen && uv run python contract.py --target local
+```
+
+Against a running server, local or deployed. This calls `POST /admin/reset`, so it wipes the data:
+
+```bash
+cd judge && uv run python contract.py --target https://your-host
+```
+
 ## 7. Run the API container
 
 ```bash

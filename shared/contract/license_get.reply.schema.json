@@ -1,4 +1,30 @@
 {
-  "_about": "GET /license 200 reply. Owner: B drafts, A reviews. Filled in by: B1.",
-  "$comment": "Filled in by B1 from PRD Appendix A"
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "license_get.reply.schema.json",
+  "title": "license_get.reply",
+  "_about": "GET /license 200 reply. Works when expired. Nulls when no licence is loaded. Owner: B drafts, A reviews. Filled in by: B1 from PRD Appendix A.",
+  "type": "object",
+  "properties": {
+    "licensee": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "expires_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "valid": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "licensee",
+    "expires_at",
+    "valid"
+  ],
+  "additionalProperties": true
 }

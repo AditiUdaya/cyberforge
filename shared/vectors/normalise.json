@@ -1,4 +1,695 @@
 {
-  "_about": "Normalisation cases: every PRD example plus 60+ of our own including junk. Owner: B drafts, A reviews. Filled in by: B1.",
-  "cases": []
+  "_about": "Normalisation cases: input to standard form; expected null means 400. source prd is a PRD example. Owner: B drafts, A reviews. Filled in by: B1.",
+  "cases": [
+    {
+      "type": "phone",
+      "input": "+91 98765 43210",
+      "expected": "+919876543210",
+      "source": "prd"
+    },
+    {
+      "type": "phone",
+      "input": "09876543210",
+      "expected": "+919876543210",
+      "source": "prd"
+    },
+    {
+      "type": "phone",
+      "input": "98765-43210",
+      "expected": "+919876543210",
+      "source": "prd"
+    },
+    {
+      "type": "phone",
+      "input": "919876543210",
+      "expected": "+919876543210",
+      "source": "prd"
+    },
+    {
+      "type": "phone",
+      "input": "+91 80 4100 2233",
+      "expected": "+918041002233",
+      "source": "prd"
+    },
+    {
+      "type": "phone",
+      "input": "+91 80 2553 0190",
+      "expected": "+918025530190",
+      "source": "prd"
+    },
+    {
+      "type": "phone",
+      "input": "1930",
+      "expected": "1930",
+      "source": "prd"
+    },
+    {
+      "type": "phone",
+      "input": "1909",
+      "expected": "1909",
+      "source": "prd"
+    },
+    {
+      "type": "phone",
+      "input": "1800 1600",
+      "expected": "18001600",
+      "source": "prd"
+    },
+    {
+      "type": "phone",
+      "input": "1800 2600",
+      "expected": "18002600",
+      "source": "prd"
+    },
+    {
+      "type": "phone",
+      "input": "1800 1080",
+      "expected": "18001080",
+      "source": "prd"
+    },
+    {
+      "type": "phone",
+      "input": "1800 1234",
+      "expected": "18001234",
+      "source": "prd"
+    },
+    {
+      "type": "phone",
+      "input": "1800 2100",
+      "expected": "18002100",
+      "source": "prd"
+    },
+    {
+      "type": "phone",
+      "input": "1860 419 5555",
+      "expected": "18604195555",
+      "source": "prd"
+    },
+    {
+      "type": "phone",
+      "input": "1860 266 2666",
+      "expected": "18602662666",
+      "source": "prd"
+    },
+    {
+      "type": "phone",
+      "input": "9876543210",
+      "expected": "+919876543210",
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "+919876543210",
+      "expected": "+919876543210",
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "+91-98765-43210",
+      "expected": "+919876543210",
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "+91 9876543210",
+      "expected": "+919876543210",
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "91 98765 43210",
+      "expected": "+919876543210",
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "(+91) 98765 43210",
+      "expected": "+919876543210",
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "0 98765 43210",
+      "expected": "+919876543210",
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "0091 98765 43210",
+      "expected": "+919876543210",
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "  +91 98765 43210  ",
+      "expected": "+919876543210",
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "98765.43210",
+      "expected": "+919876543210",
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "080 4100 2233",
+      "expected": "+918041002233",
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "080-41002233",
+      "expected": "+918041002233",
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "+91 22 2345 6789",
+      "expected": "+912223456789",
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "6123456789",
+      "expected": "+916123456789",
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "18001600",
+      "expected": "18001600",
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "1800-180-1290",
+      "expected": "18001801290",
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "1800 1234 567",
+      "expected": "18001234567",
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "112",
+      "expected": "112",
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "12345",
+      "expected": null,
+      "source": "prd"
+    },
+    {
+      "type": "phone",
+      "input": "test",
+      "expected": null,
+      "source": "prd"
+    },
+    {
+      "type": "phone",
+      "input": "",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "   ",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "+91 12345 67890",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "01234567890",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "+910987654321",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "0000000000",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "98765432",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "987654321012",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "+91 98765 432100",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "+1 415 555 0100",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "+44 20 7946 0958",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "98765abcde",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "+91 98765 4321O",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "1800 12",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "1800 1234 56789",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "1931",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "ravi12@okaxis",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "phone",
+      "input": "https://sbi-kyc.in/pay",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "upi",
+      "input": "Ravi12@OKAXIS",
+      "expected": "ravi12@okaxis",
+      "source": "prd"
+    },
+    {
+      "type": "upi",
+      "input": "freshbakes@okaxis",
+      "expected": "freshbakes@okaxis",
+      "source": "prd"
+    },
+    {
+      "type": "upi",
+      "input": "FreshBakes@OkAxis",
+      "expected": "freshbakes@okaxis",
+      "source": "ours"
+    },
+    {
+      "type": "upi",
+      "input": "  ravi12@okaxis  ",
+      "expected": "ravi12@okaxis",
+      "source": "ours"
+    },
+    {
+      "type": "upi",
+      "input": "ravi 12 @ okaxis",
+      "expected": "ravi12@okaxis",
+      "source": "ours"
+    },
+    {
+      "type": "upi",
+      "input": "ravi.kumar-12@ybl",
+      "expected": "ravi.kumar-12@ybl",
+      "source": "ours"
+    },
+    {
+      "type": "upi",
+      "input": "9876543210@paytm",
+      "expected": "9876543210@paytm",
+      "source": "ours"
+    },
+    {
+      "type": "upi",
+      "input": "ravi_12@oksbi",
+      "expected": "ravi_12@oksbi",
+      "source": "ours"
+    },
+    {
+      "type": "upi",
+      "input": "ravi12okaxis",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "upi",
+      "input": "ravi12@@okaxis",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "upi",
+      "input": "@okaxis",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "upi",
+      "input": "ravi12@",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "upi",
+      "input": "ravi@ok@axis",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "upi",
+      "input": "ravi12@ok.axis",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "upi",
+      "input": "ravi#12@okaxis",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "upi",
+      "input": "test",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "upi",
+      "input": "",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "upi",
+      "input": "+91 98765 43210",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "url",
+      "input": "http://www.sbi-kyc.in/pay?utm=sms",
+      "expected": "https://sbi-kyc.in/pay",
+      "source": "prd"
+    },
+    {
+      "type": "url",
+      "input": "https://cybercrime.gov.in",
+      "expected": "https://cybercrime.gov.in",
+      "source": "prd"
+    },
+    {
+      "type": "url",
+      "input": "https://sancharsaathi.gov.in",
+      "expected": "https://sancharsaathi.gov.in",
+      "source": "prd"
+    },
+    {
+      "type": "url",
+      "input": "https://sbi-kyc.in/pay/",
+      "expected": "https://sbi-kyc.in/pay",
+      "source": "ours"
+    },
+    {
+      "type": "url",
+      "input": "sbi-kyc.in/pay",
+      "expected": "https://sbi-kyc.in/pay",
+      "source": "ours"
+    },
+    {
+      "type": "url",
+      "input": "www.sbi-kyc.in/pay",
+      "expected": "https://sbi-kyc.in/pay",
+      "source": "ours"
+    },
+    {
+      "type": "url",
+      "input": "HTTPS://WWW.SBI-KYC.IN/Pay",
+      "expected": "https://sbi-kyc.in/Pay",
+      "source": "ours"
+    },
+    {
+      "type": "url",
+      "input": "https://sbi-kyc.in/",
+      "expected": "https://sbi-kyc.in",
+      "source": "ours"
+    },
+    {
+      "type": "url",
+      "input": "https://sbi-kyc.in/pay#top",
+      "expected": "https://sbi-kyc.in/pay",
+      "source": "ours"
+    },
+    {
+      "type": "url",
+      "input": "https://sbi-kyc.in/pay?",
+      "expected": "https://sbi-kyc.in/pay",
+      "source": "ours"
+    },
+    {
+      "type": "url",
+      "input": "http://sbi-kyc.in/pay/?a=1#b",
+      "expected": "https://sbi-kyc.in/pay",
+      "source": "ours"
+    },
+    {
+      "type": "url",
+      "input": "https://cybercrime.gov.in/",
+      "expected": "https://cybercrime.gov.in",
+      "source": "ours"
+    },
+    {
+      "type": "url",
+      "input": "https://bit.ly/3xYzAb",
+      "expected": "https://bit.ly/3xYzAb",
+      "source": "ours"
+    },
+    {
+      "type": "url",
+      "input": "  https://sbi-kyc.in/pay  ",
+      "expected": "https://sbi-kyc.in/pay",
+      "source": "ours"
+    },
+    {
+      "type": "url",
+      "input": "https://login.sbi-kyc.in/a/b",
+      "expected": "https://login.sbi-kyc.in/a/b",
+      "source": "ours"
+    },
+    {
+      "type": "url",
+      "input": "test",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "url",
+      "input": "",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "url",
+      "input": "http://",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "url",
+      "input": "https://localhost/pay",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "url",
+      "input": "ftp://sbi-kyc.in/pay",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "url",
+      "input": "javascript:alert(1)",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "url",
+      "input": "https://exa mple.com",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "url",
+      "input": "12345",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "url",
+      "input": "ravi12@okaxis",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "sender_id",
+      "input": "VM-HDFCBK",
+      "expected": "HDFCBK",
+      "source": "prd"
+    },
+    {
+      "type": "sender_id",
+      "input": "AD-HDFCBK",
+      "expected": "HDFCBK",
+      "source": "prd"
+    },
+    {
+      "type": "sender_id",
+      "input": "HDFCBK",
+      "expected": "HDFCBK",
+      "source": "prd"
+    },
+    {
+      "type": "sender_id",
+      "input": "ICICIB",
+      "expected": "ICICIB",
+      "source": "prd"
+    },
+    {
+      "type": "sender_id",
+      "input": "SBIINB",
+      "expected": "SBIINB",
+      "source": "prd"
+    },
+    {
+      "type": "sender_id",
+      "input": "AXISBK",
+      "expected": "AXISBK",
+      "source": "prd"
+    },
+    {
+      "type": "sender_id",
+      "input": "KOTAKB",
+      "expected": "KOTAKB",
+      "source": "prd"
+    },
+    {
+      "type": "sender_id",
+      "input": "vm-hdfcbk",
+      "expected": "HDFCBK",
+      "source": "ours"
+    },
+    {
+      "type": "sender_id",
+      "input": "JD-ICICIB",
+      "expected": "ICICIB",
+      "source": "ours"
+    },
+    {
+      "type": "sender_id",
+      "input": "VM-HDFCBK-S",
+      "expected": "HDFCBK",
+      "source": "ours"
+    },
+    {
+      "type": "sender_id",
+      "input": " AX-SBIINB ",
+      "expected": "SBIINB",
+      "source": "ours"
+    },
+    {
+      "type": "sender_id",
+      "input": "BZ-KOTAKB",
+      "expected": "KOTAKB",
+      "source": "ours"
+    },
+    {
+      "type": "sender_id",
+      "input": "HDFC",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "sender_id",
+      "input": "HDFCBANK",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "sender_id",
+      "input": "VM-HDFC",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "sender_id",
+      "input": "12345",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "sender_id",
+      "input": "test",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "sender_id",
+      "input": "",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "sender_id",
+      "input": "HDFC1K",
+      "expected": null,
+      "source": "ours"
+    },
+    {
+      "type": "sender_id",
+      "input": "+91 98765 43210",
+      "expected": null,
+      "source": "ours"
+    }
+  ]
 }
