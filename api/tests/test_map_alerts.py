@@ -262,3 +262,9 @@ def test_reset_clears_challenges(client: TestClient) -> None:
     client.post("/challenges", json=CHALLENGE)
     client.post("/admin/reset")
     assert lookup(client)["challenged"] is False
+
+
+def test_unknown_scam_types_never_raise_new_type(client: TestClient) -> None:
+    steady(client, HSR, 1, "job-offer")
+    today(client, HSR, 1, "crypto-doubler")
+    assert alerts(client, HSR) == []

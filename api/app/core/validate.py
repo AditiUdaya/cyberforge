@@ -92,4 +92,7 @@ def to_utc_text(when: datetime) -> str:
 
 
 def to_display(utc_text: str) -> str:
-    return datetime.fromisoformat(utc_text).astimezone(DISPLAY_TZ).isoformat()
+    """Stored UTC time as shown in replies: India time, to the second, like the PRD examples."""
+    return (
+        datetime.fromisoformat(utc_text).astimezone(DISPLAY_TZ).replace(microsecond=0).isoformat()
+    )
