@@ -1,0 +1,7 @@
+# LF everywhere: shell scripts and container files break with CRLF.
+# Owner: B. Filled in by: B0.
+* text=auto eol=lf
+*.pdf binary
+*.png binary
+*.jpg binary
+*.sqlite binary
