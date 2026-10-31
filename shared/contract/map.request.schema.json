@@ -1,4 +1,27 @@
 {
-  "_about": "GET /map query parameters (pincode, days, radius_km). Owner: B drafts, A reviews. Filled in by: B1.",
-  "$comment": "Filled in by B1 from PRD Appendix A"
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "map.request.schema.json",
+  "title": "map.request",
+  "_about": "GET /map query parameters. days defaults to 7, radius_km to 2. Owner: B drafts, A reviews. Filled in by: B1 from PRD Appendix A.",
+  "type": "object",
+  "properties": {
+    "pincode": {
+      "type": "string",
+      "pattern": "^[0-9]{6}$"
+    },
+    "days": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "default": 7
+    },
+    "radius_km": {
+      "type": "number",
+      "minimum": 0,
+      "default": 2
+    }
+  },
+  "required": [
+    "pincode"
+  ],
+  "additionalProperties": true
 }

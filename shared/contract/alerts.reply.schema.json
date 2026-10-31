@@ -1,4 +1,76 @@
 {
-  "_about": "GET /alerts 200 reply. Owner: B drafts, A reviews. Filled in by: B1.",
-  "$comment": "Filled in by B1 from PRD Appendix A"
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "alerts.reply.schema.json",
+  "title": "alerts.reply",
+  "_about": "GET /alerts 200 reply: SPIKE and NEW_TYPE only; none is {\"alerts\": []}. Owner: B drafts, A reviews. Filled in by: B1 from PRD Appendix A.",
+  "type": "object",
+  "properties": {
+    "alerts": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "SPIKE"
+              },
+              "pincode": {
+                "type": "string",
+                "pattern": "^[0-9]{6}$"
+              },
+              "window": {
+                "const": "24h"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 5
+              },
+              "baseline_per_day": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "type",
+              "pincode",
+              "window",
+              "count",
+              "baseline_per_day"
+            ],
+            "additionalProperties": true
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "NEW_TYPE"
+              },
+              "pincode": {
+                "type": "string",
+                "pattern": "^[0-9]{6}$"
+              },
+              "scam_type": {
+                "type": "string"
+              },
+              "window": {
+                "const": "24h"
+              }
+            },
+            "required": [
+              "type",
+              "pincode",
+              "scam_type",
+              "window"
+            ],
+            "additionalProperties": true
+          }
+        ]
+      }
+    }
+  },
+  "required": [
+    "alerts"
+  ],
+  "additionalProperties": true
 }

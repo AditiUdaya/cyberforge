@@ -1,4 +1,7 @@
 {
-  "_about": "POST /admin/reset 200 reply. Owner: B drafts, A reviews. Filled in by: B1.",
-  "$comment": "Filled in by B1 from PRD Appendix A"
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "admin_reset.reply.schema.json",
+  "title": "admin_reset.reply",
+  "_about": "POST /admin/reset 200 reply. The PRD fixes only the status code. Owner: B drafts, A reviews. Filled in by: B1 from PRD Appendix A.",
+  "type": "object"
 }

@@ -1,4 +1,17 @@
 {
-  "_about": "Every non-2xx reply: {\"error\": \"...\"}. Owner: B drafts, A reviews. Filled in by: B1.",
-  "$comment": "Filled in by B1 from PRD Appendix A"
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "error.schema.json",
+  "title": "error",
+  "_about": "Every non-2xx reply. Expired licence is exactly 403 {\"error\": \"LICENSE_EXPIRED\"}. Owner: B drafts, A reviews. Filled in by: B1 from PRD Appendix A.",
+  "type": "object",
+  "properties": {
+    "error": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "error"
+  ],
+  "additionalProperties": true
 }

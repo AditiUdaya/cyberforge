@@ -1,4 +1,30 @@
 {
-  "_about": "POST /license 200 reply. Owner: B drafts, A reviews. Filled in by: B1.",
-  "$comment": "Filled in by B1 from PRD Appendix A"
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "license_post.reply.schema.json",
+  "title": "license_post.reply",
+  "_about": "POST /license 200 reply: the licence now in force. Owner: B drafts, A reviews. Filled in by: B1 from PRD Appendix A.",
+  "type": "object",
+  "properties": {
+    "licensee": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "expires_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "valid": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "licensee",
+    "expires_at",
+    "valid"
+  ],
+  "additionalProperties": true
 }

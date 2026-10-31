@@ -1,4 +1,17 @@
 {
-  "_about": "GET /alerts query parameters (pincode). Owner: B drafts, A reviews. Filled in by: B1.",
-  "$comment": "Filled in by B1 from PRD Appendix A"
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "alerts.request.schema.json",
+  "title": "alerts.request",
+  "_about": "GET /alerts query parameters. Owner: B drafts, A reviews. Filled in by: B1 from PRD Appendix A.",
+  "type": "object",
+  "properties": {
+    "pincode": {
+      "type": "string",
+      "pattern": "^[0-9]{6}$"
+    }
+  },
+  "required": [
+    "pincode"
+  ],
+  "additionalProperties": true
 }

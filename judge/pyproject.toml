@@ -1,3 +1,35 @@
 # Judge simulator project: black-box contract tests, scenario generator, scorecard, scanners.
 # Exact pinned versions.
 # Owner: B. Filled in by: B1.
+
+[project]
+name = "scam-map-judge"
+version = "0.1.0"
+requires-python = "==3.12.*"
+dependencies = [
+  "httpx==0.28.1",
+  "jsonschema==4.26.0",
+]
+
+[dependency-groups]
+dev = [
+  "types-jsonschema==4.26.0.20261006",
+  "ruff==0.17.3",
+  "mypy==2.4.1",
+  "pip-audit==2.10.1",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
+
+[tool.ruff.lint.per-file-ignores]
+# contract.py starts the local API with a fixed argument list (no shell, no user input).
+"contract.py" = ["S603"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"

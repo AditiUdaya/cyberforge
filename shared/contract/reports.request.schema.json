@@ -1,4 +1,78 @@
 {
-  "_about": "POST /reports request body. Owner: B drafts, A reviews. Filled in by: B1.",
-  "$comment": "Filled in by B1 from PRD Appendix A"
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "reports.request.schema.json",
+  "title": "reports.request",
+  "_about": "POST /reports body (Appendix A section 2). Extra fields are tolerated. Owner: B drafts, A reviews. Filled in by: B1 from PRD Appendix A.",
+  "type": "object",
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "occurred_at": {
+      "type": "string",
+      "minLength": 1,
+      "description": "ISO 8601 with an offset"
+    },
+    "reported_at": {
+      "type": "string",
+      "minLength": 1,
+      "description": "ISO 8601 with an offset"
+    },
+    "reporter_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ip_prefix": {
+      "type": "string"
+    },
+    "channel": {
+      "type": "string"
+    },
+    "scam_type": {
+      "type": "string"
+    },
+    "identifier_type": {
+      "type": "string",
+      "enum": [
+        "phone",
+        "upi",
+        "url",
+        "sender_id"
+      ]
+    },
+    "identifier_value": {
+      "type": "string"
+    },
+    "pincode": {
+      "type": "string"
+    },
+    "locality": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "note": {
+      "type": "string"
+    },
+    "has_screenshot": {
+      "type": "boolean"
+    },
+    "amount_lost_inr": {
+      "type": "number",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "report_id",
+    "occurred_at",
+    "reporter_id",
+    "channel",
+    "scam_type",
+    "identifier_type",
+    "identifier_value",
+    "pincode"
+  ],
+  "additionalProperties": true
 }

@@ -1,4 +1,63 @@
 {
-  "_about": "GET /map 200 reply. Owner: B drafts, A reviews. Filled in by: B1.",
-  "$comment": "Filled in by B1 from PRD Appendix A"
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "map.reply.schema.json",
+  "title": "map.reply",
+  "_about": "GET /map 200 reply: one cluster per area in radius with reports in the window. Owner: B drafts, A reviews. Filled in by: B1 from PRD Appendix A.",
+  "type": "object",
+  "properties": {
+    "clusters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "pincode": {
+            "type": "string",
+            "pattern": "^[0-9]{6}$"
+          },
+          "locality": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "top_scam_type": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "CRIT",
+              "HIGH",
+              "MED"
+            ]
+          },
+          "lat": {
+            "type": "number"
+          },
+          "lng": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "pincode",
+          "locality",
+          "city",
+          "count",
+          "top_scam_type",
+          "severity",
+          "lat",
+          "lng"
+        ],
+        "additionalProperties": true
+      }
+    }
+  },
+  "required": [
+    "clusters"
+  ],
+  "additionalProperties": true
 }

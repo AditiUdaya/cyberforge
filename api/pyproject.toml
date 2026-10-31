@@ -18,6 +18,8 @@ dev = [
   "ruff==0.17.3",
   "mypy==2.4.1",
   "pip-audit==2.10.1",
+  "jsonschema==4.26.0",
+  "types-jsonschema==4.26.0.20261006",
 ]
 
 [tool.ruff]

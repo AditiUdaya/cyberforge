@@ -1,4 +1,92 @@
 {
-  "_about": "GET /lookup 200 reply. Owner: B drafts, A reviews. Filled in by: B1.",
-  "$comment": "Filled in by B1 from PRD Appendix A"
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "lookup.reply.schema.json",
+  "title": "lookup.reply",
+  "_about": "GET /lookup 200 reply. evidence items allow no extra fields: never a reporter, IP or note. Owner: B drafts, A reviews. Filled in by: B1 from PRD Appendix A.",
+  "type": "object",
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "KNOWN_SCAM",
+        "SUSPICIOUS",
+        "NO_REPORTS",
+        "VERIFIED_BUSINESS"
+      ]
+    },
+    "report_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "distinct_reporters": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "first_seen": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "last_seen": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "scam_type": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "display_value": {
+      "type": "string"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "occurred_at": {
+            "type": "string",
+            "minLength": 1,
+            "description": "ISO 8601 with an offset"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "scam_type": {
+            "type": "string"
+          },
+          "pincode": {
+            "type": "string",
+            "pattern": "^[0-9]{6}$"
+          }
+        },
+        "required": [
+          "occurred_at",
+          "channel",
+          "scam_type",
+          "pincode"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "challenged": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "verdict",
+    "report_count",
+    "distinct_reporters",
+    "first_seen",
+    "last_seen",
+    "scam_type",
+    "display_value",
+    "evidence",
+    "challenged"
+  ],
+  "additionalProperties": true
 }

@@ -1,4 +1,203 @@
 {
-  "_about": "Masking cases for 0 to 3 reporters, all four types. Owner: B drafts, A reviews. Filled in by: B1.",
-  "cases": []
+  "_about": "display_value for a normalised value: masked below 3 distinct reporters, full at 3 or more. Owner: B drafts, A reviews. Filled in by: B1.",
+  "cases": [
+    {
+      "type": "phone",
+      "normalised": "+919876543210",
+      "distinct_reporters": 0,
+      "expected": "98XXXXX210"
+    },
+    {
+      "type": "phone",
+      "normalised": "+919876543210",
+      "distinct_reporters": 1,
+      "expected": "98XXXXX210"
+    },
+    {
+      "type": "phone",
+      "normalised": "+919876543210",
+      "distinct_reporters": 2,
+      "expected": "98XXXXX210"
+    },
+    {
+      "type": "phone",
+      "normalised": "+919876543210",
+      "distinct_reporters": 3,
+      "expected": "+919876543210"
+    },
+    {
+      "type": "phone",
+      "normalised": "+918041002233",
+      "distinct_reporters": 0,
+      "expected": "80XXXXX233"
+    },
+    {
+      "type": "phone",
+      "normalised": "+918041002233",
+      "distinct_reporters": 1,
+      "expected": "80XXXXX233"
+    },
+    {
+      "type": "phone",
+      "normalised": "+918041002233",
+      "distinct_reporters": 2,
+      "expected": "80XXXXX233"
+    },
+    {
+      "type": "phone",
+      "normalised": "+918041002233",
+      "distinct_reporters": 3,
+      "expected": "+918041002233"
+    },
+    {
+      "type": "phone",
+      "normalised": "18001600",
+      "distinct_reporters": 0,
+      "expected": "18XXX600"
+    },
+    {
+      "type": "phone",
+      "normalised": "18001600",
+      "distinct_reporters": 1,
+      "expected": "18XXX600"
+    },
+    {
+      "type": "phone",
+      "normalised": "18001600",
+      "distinct_reporters": 2,
+      "expected": "18XXX600"
+    },
+    {
+      "type": "phone",
+      "normalised": "18001600",
+      "distinct_reporters": 3,
+      "expected": "18001600"
+    },
+    {
+      "type": "phone",
+      "normalised": "1930",
+      "distinct_reporters": 0,
+      "expected": "19XX"
+    },
+    {
+      "type": "phone",
+      "normalised": "1930",
+      "distinct_reporters": 1,
+      "expected": "19XX"
+    },
+    {
+      "type": "phone",
+      "normalised": "1930",
+      "distinct_reporters": 2,
+      "expected": "19XX"
+    },
+    {
+      "type": "phone",
+      "normalised": "1930",
+      "distinct_reporters": 3,
+      "expected": "1930"
+    },
+    {
+      "type": "upi",
+      "normalised": "ravi12@okaxis",
+      "distinct_reporters": 0,
+      "expected": "r***@okaxis"
+    },
+    {
+      "type": "upi",
+      "normalised": "ravi12@okaxis",
+      "distinct_reporters": 1,
+      "expected": "r***@okaxis"
+    },
+    {
+      "type": "upi",
+      "normalised": "ravi12@okaxis",
+      "distinct_reporters": 2,
+      "expected": "r***@okaxis"
+    },
+    {
+      "type": "upi",
+      "normalised": "ravi12@okaxis",
+      "distinct_reporters": 3,
+      "expected": "ravi12@okaxis"
+    },
+    {
+      "type": "url",
+      "normalised": "https://sbi-kyc.in/pay",
+      "distinct_reporters": 0,
+      "expected": "sbi***.in/..."
+    },
+    {
+      "type": "url",
+      "normalised": "https://sbi-kyc.in/pay",
+      "distinct_reporters": 1,
+      "expected": "sbi***.in/..."
+    },
+    {
+      "type": "url",
+      "normalised": "https://sbi-kyc.in/pay",
+      "distinct_reporters": 2,
+      "expected": "sbi***.in/..."
+    },
+    {
+      "type": "url",
+      "normalised": "https://sbi-kyc.in/pay",
+      "distinct_reporters": 3,
+      "expected": "https://sbi-kyc.in/pay"
+    },
+    {
+      "type": "url",
+      "normalised": "https://login.sbi-kyc.in/a/b",
+      "distinct_reporters": 0,
+      "expected": "log***.in/..."
+    },
+    {
+      "type": "url",
+      "normalised": "https://login.sbi-kyc.in/a/b",
+      "distinct_reporters": 1,
+      "expected": "log***.in/..."
+    },
+    {
+      "type": "url",
+      "normalised": "https://login.sbi-kyc.in/a/b",
+      "distinct_reporters": 2,
+      "expected": "log***.in/..."
+    },
+    {
+      "type": "url",
+      "normalised": "https://login.sbi-kyc.in/a/b",
+      "distinct_reporters": 3,
+      "expected": "https://login.sbi-kyc.in/a/b"
+    },
+    {
+      "type": "sender_id",
+      "normalised": "HDFCBK",
+      "distinct_reporters": 0,
+      "expected": "HD****"
+    },
+    {
+      "type": "sender_id",
+      "normalised": "HDFCBK",
+      "distinct_reporters": 1,
+      "expected": "HD****"
+    },
+    {
+      "type": "sender_id",
+      "normalised": "HDFCBK",
+      "distinct_reporters": 2,
+      "expected": "HD****"
+    },
+    {
+      "type": "sender_id",
+      "normalised": "HDFCBK",
+      "distinct_reporters": 3,
+      "expected": "HDFCBK"
+    },
+    {
+      "type": "phone",
+      "normalised": "+919876543210",
+      "distinct_reporters": 7,
+      "expected": "+919876543210"
+    }
+  ]
 }
