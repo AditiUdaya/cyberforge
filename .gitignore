@@ -1,0 +1,24 @@
+# Keep secrets, local databases and build output out of git.
+# Owner: B. Filled in by: B0.
+
+# Secrets: the licence private key never enters the repo
+*.key
+*.pem
+!api/app/license/public_key.pem
+.env
+
+# Local databases
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+
+# Python
+__pycache__/
+.venv/
+
+# Web
+node_modules/
+
+# Large downloaded data
+data/urlhaus/

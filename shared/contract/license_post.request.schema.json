@@ -1,0 +1,4 @@
+{
+  "_about": "POST /license request body (licensee, expires_at, signature). Owner: B drafts, A reviews. Filled in by: B1.",
+  "$comment": "Filled in by B1 from PRD Appendix A"
+}

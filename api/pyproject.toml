@@ -1,0 +1,3 @@
+# API project: FastAPI, Python 3.12, uv, ruff, mypy, pytest. Exact pinned versions.
+# Not listed in SPEC 'Repo layout' but scripts/check.sh runs 'uv sync' here.
+# Owner: B. Filled in by: B0.

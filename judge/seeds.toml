@@ -1,0 +1,3 @@
+# Tuning seeds (1 to 10) and held-out seeds (101 to 150).
+# Tune only on tuning seeds; report only held-out results.
+# Owner: B. Filled in by: B4.
