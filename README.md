@@ -12,8 +12,8 @@ the rules were never tuned on.
 
 | | |
 | --- | --- |
-| API (judged address) | `https://<api>.fly.dev` (Fly.io, always on, HTTPS) |
-| Mobile website | `https://<web>.fly.dev` (Streamlit, English and Hindi, works with icons alone) |
+| API | http://127.0.0.1:8000 when running locally (`scripts/run_local.sh`) |
+| Mobile website | http://127.0.0.1:8501 (Streamlit, English and Hindi, works with icons alone) |
 | Brief | [docs/PRD.pdf](docs/PRD.pdf), our plan in [docs/SPEC.md](docs/SPEC.md), design in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 
 ## Run it
@@ -21,11 +21,22 @@ the rules were never tuned on.
 You need [uv](https://docs.astral.sh/uv/) (Python 3.12 is installed by uv if missing) and Git. Full setup,
 including Windows notes, is in [docs/SETUP.md](docs/SETUP.md).
 
+**Quickest: everything on this laptop in one command** (Git Bash on Windows). It starts the API on :8000 and the
+website on :8501, loads a licence signed with your key, fills in demo data and prints numbers to try. Ctrl+C stops it.
+
+```bash
+scripts/run_local.sh
+```
+
+Add `--keep` to start with the data already in `.local/` instead of fresh demo data. The steps below do the same by
+hand.
+
 ```bash
 git clone <repo-url> scam-map && cd scam-map
 ```
 
-**1. Start the API** on port 8000. It needs an HMAC key (any long random string locally):
+**1. Start the API** on port 8000. It needs an HMAC key (any long random string locally). These commands
+are for Git Bash or macOS/Linux; PowerShell sets the variable with `$env:SCAM_MAP_HMAC_KEY = "..."` first:
 
 ```bash
 cd api && uv sync --frozen && SCAM_MAP_HMAC_KEY=change-me-to-a-long-random-string uv run uvicorn app.main:app
@@ -64,7 +75,7 @@ Open http://127.0.0.1:8501 on a phone-sized window. Try the PRD's example messag
 cd judge && uv sync --frozen && uv run python runner.py --seeds holdout --target local
 ```
 
-Deploying to Fly.io is step by step in [infra/README.md](infra/README.md).
+Hosting options (one command, or the two Docker containers) are in [infra/README.md](infra/README.md).
 
 ## How trust rules work
 
@@ -124,7 +135,7 @@ A licence is a small signed file:
 The PRD's four-step demo, end to end against any server (waits for the short licence to expire):
 
 ```bash
-scripts/license_demo.sh https://<api>.fly.dev licence-5min.json licence-long.json
+scripts/license_demo.sh http://127.0.0.1:8000 licence-5min.json licence-long.json
 ```
 
 ## Privacy
@@ -163,7 +174,7 @@ api/      FastAPI server: routes, core rules, licence, migrations, tests      (P
 web/      Streamlit mobile website: six screens, English and Hindi, icons      (Person A)
 judge/    Contract tests, judge simulator, metamorphic tests, scanners, perf   (Person B)
 shared/   The contract: JSON Schemas, PRD data (areas, verified, scam types), test vectors
-infra/    Dockerfiles and Fly.io config                                        (Person A)
+infra/    Dockerfiles and the local hosting guide                              (Person A)
 scripts/  check.sh, verify_deployed.sh, licence key, sign and demo scripts
 docs/     PRD, spec, architecture, decisions, results, setup
 ```
@@ -175,3 +186,5 @@ docs/     PRD, spec, architecture, decisions, results, setup
   visitor on another network counts as a new reporter.
 - **One API machine.** SQLite on one volume means one machine; fine for this load (see performance), but scaling
   out would mean moving to Postgres.
+- **Hosted on a laptop** (DECISIONS D59). The PRD scores the server row on a public HTTPS address; see
+  [infra/README.md](infra/README.md) for how a tunnel could provide one.

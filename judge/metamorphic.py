@@ -21,6 +21,8 @@ from dataclasses import replace
 from datetime import UTC, datetime, timedelta, timezone
 from typing import Any
 
+import httpx
+
 from contract import Client, local_server
 from families import FAMILIES
 from generator import Gen, ReportStep, Scenario, lookup, phone_formats
@@ -115,9 +117,19 @@ def run(client: Client, seeds: list[int], salt: str) -> list[str]:
     for seed in seeds:
         for family in FAMILIES_USED:
             scenario = FAMILIES[family](Gen(family, seed, salt, datetime.now(UTC)))
-            expected = answers(client, scenario, scenario.reports)
+            try:
+                expected = answers(client, scenario, scenario.reports)
+            except (httpx.HTTPError, AssertionError, RuntimeError) as e:
+                failures += [f"{family}:{seed} {n}: baseline failed: {e!r}" for n in TRANSFORMS]
+                print("E" * len(TRANSFORMS), end="", flush=True)
+                continue
             for name in TRANSFORMS:
-                got = answers(client, scenario, transform(scenario, name, seed))
+                try:
+                    got = answers(client, scenario, transform(scenario, name, seed))
+                except (httpx.HTTPError, AssertionError, RuntimeError) as e:
+                    failures.append(f"{family}:{seed} {name}: request failed: {e!r}")
+                    print("E", end="", flush=True)
+                    continue
                 ok = got == expected
                 print("." if ok else "F", end="", flush=True)
                 if not ok:
@@ -128,8 +140,6 @@ def run(client: Client, seeds: list[int], salt: str) -> list[str]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    import httpx
-
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0] if __doc__ else None)
     parser.add_argument("--target", required=True, help="'local' or a base URL")
     parser.add_argument("--seeds", default="tuning", help="tuning, holdout, or 1,2,3")

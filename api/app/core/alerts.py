@@ -21,6 +21,7 @@ BASELINE_DAYS = 7
 NEW_TYPE_LOOKBACK = timedelta(days=30)
 SPIKE_MIN = 5
 SPIKE_FACTOR = 2.0
+UNKNOWN_TYPE = "other"
 
 # How far back alerts need to read.
 HISTORY = WINDOW + max(timedelta(days=BASELINE_DAYS), NEW_TYPE_LOOKBACK)
@@ -51,6 +52,7 @@ def alerts(
         )
 
     seen_before = {kind for t, kind in events if lookback_start < t <= recent_start}
-    for kind in sorted({kind for _, kind in recent} - seen_before):
+    # "other" collects every unrecognised type, so it is not a kind of scam people can act on.
+    for kind in sorted({kind for _, kind in recent} - seen_before - {UNKNOWN_TYPE}):
         found.append({"type": "NEW_TYPE", "pincode": pincode, "scam_type": kind, "window": "24h"})
     return found

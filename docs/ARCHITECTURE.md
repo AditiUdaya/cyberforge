@@ -117,6 +117,8 @@ What these rules cannot do: tell apart 40 friends who each write their own words
 
 ## Data model
 
+> `/map` and `/alerts` read counted reports directly instead of an `area_day` table (DECISIONS D58). Hosted on a laptop (D59).
+
 SQLite in WAL mode on a persistent volume. Every identifier and reporter field is a keyed HMAC; the keys come from environment secrets set on the host.
 
 | Table | Key columns | Notes |
@@ -150,6 +152,8 @@ The PRD routes are the contract; `shared/contract/*.schema.json` encodes them an
 Errors use `{"error": "..."}` as the PRD shows. Expired licence is exactly `403 {"error": "LICENSE_EXPIRED"}`.
 
 ## Web app
+
+> Built in Streamlit instead of React (DECISIONS D54); the device id lasts one browser session (D57). The screens below are as built.
 
 | Layer | Choice |
 | --- | --- |

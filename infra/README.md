@@ -1,111 +1,84 @@
-<!-- Host config and deploy steps for the cloud server. Owner: A. Filled in by: A0. -->
-# infra: deploying to Fly.io
+<!-- How the app is hosted: on a laptop (DECISIONS D59). Owner: A. Filled in by: A0. -->
+# infra: hosting locally
 
-Two apps on Fly.io (DECISIONS D55, D56), both always on, both HTTPS on `*.fly.dev`:
+The app runs on a laptop (DECISIONS D59): the API and the Streamlit website as two separate services (D55).
+Pick one of the two ways below. Both keep the database between runs.
 
-| App | What | Config | Image |
-| --- | --- | --- | --- |
-| API | The address the judges test. SQLite on a 1 GB volume at `/data`. | `fly.api.toml` | `Dockerfile` |
-| Web | The Streamlit mobile website. Talks to the API over HTTPS. | `fly.web.toml` | `Dockerfile.web` |
+## Option 1: one command (recommended)
 
-Every command below runs from the **repo root**. You need a Fly.io account with a card on file.
-
-## 1. Once per laptop
-
-Install `flyctl` (PowerShell):
-
-```powershell
-iwr https://fly.io/install.ps1 -useb | iex
-```
-
-Then log in, which opens a browser:
-
-```powershell
-fly auth login
-```
-
-Make the licence key pair. The private key goes to `~/.scam-map/license.key` (keep it off git and off the
-server); the public key goes into `api/app/license/public_key.pem`, which you **commit** so the image has it:
-
-```powershell
-uv run --project api python scripts/license_keygen.py
-```
-
-## 2. Pick names
-
-App names are global on Fly. Pick two, for example `scam-map-api-<team>` and `scam-map-web-<team>`, and put them
-in `app = "..."` in `fly.api.toml` and `fly.web.toml`. In `fly.web.toml`, also set
-`SCAM_MAP_API_URL = "https://<api name>.fly.dev"`.
-
-## 3. API
-
-```powershell
-fly apps create <api name>
-```
-
-```powershell
-fly volumes create scam_map_data --region sin --size 1 --app <api name> --yes
-```
-
-The HMAC key turns reporter ids, IP prefixes and identifiers into keyed hashes. Never change it after reports
-exist, or every stored report becomes unreachable. Make one and set it as a secret:
-
-```powershell
-$key = uv run --project api python -c "import secrets; print(secrets.token_hex(32))"
-```
-
-```powershell
-fly secrets set SCAM_MAP_HMAC_KEY=$key --app <api name> --stage
-```
-
-Deploy one machine (SQLite on one volume needs exactly one):
-
-```powershell
-fly deploy . --config infra/fly.api.toml --dockerfile infra/Dockerfile --ha=false
-```
-
-Check it, then load a licence (everything except `/health` and `/license` answers `403 LICENSE_EXPIRED` until you do):
-
-```powershell
-curl https://<api name>.fly.dev/health
-```
-
-```powershell
-uv run --project api python scripts/license_sign.py --licensee "Demo Bank" --expires-in 30d --out licence-30d.json
-```
-
-```powershell
-curl -X POST -H "content-type: application/json" --data-binary "@licence-30d.json" https://<api name>.fly.dev/license
-```
-
-## 4. Web
-
-```powershell
-fly apps create <web name>
-```
-
-```powershell
-fly deploy . --config infra/fly.web.toml --dockerfile infra/Dockerfile.web --ha=false
-```
-
-Open `https://<web name>.fly.dev` on a phone.
-
-## 5. Verify the deployment
-
-This runs every test layer against the live API and **resets it**, so never run it after the judges load data
-(Git Bash):
+From the repo root, in Git Bash on Windows:
 
 ```bash
-scripts/verify_deployed.sh https://<api name>.fly.dev --yes
+scripts/run_local.sh
 ```
 
-## 6. Before the demo
+- API on http://127.0.0.1:8000, website on http://127.0.0.1:8501.
+- Loads a 30-day licence signed with your key (`~/.scam-map/license.key`) and fresh demo data, then prints values to
+  try. `--keep` starts with the data already there instead.
+- Data, the local HMAC key and the licence file live in `.local/` (gitignored). Ctrl+C stops everything.
 
-- Sign the two demo licences just before: `--expires-in 5m` and `--expires-in 365d`.
-- Rehearse the four PRD steps: `scripts/license_demo.sh https://<api name>.fly.dev licence-5min.json licence-long.json`.
-- After rehearsing, upload the long licence again and leave it.
+## Option 2: the two containers
 
-## Updating
+The same images a server would run. Build them from the repo root:
 
-Redeploy the same way (`fly deploy ...`). The database and the uploaded licence live on the volume, so they survive
-deploys and restarts. Logs: `fly logs --app <api name>` (no request bodies, query strings or identifiers are logged).
+```bash
+docker build -f infra/Dockerfile -t scam-map-api .
+```
+
+```bash
+docker build -f infra/Dockerfile.web -t scam-map-web .
+```
+
+Make an HMAC key once and keep it: changing it makes every stored report unreachable.
+
+```bash
+mkdir -p .local && uv run --project api python -c "import secrets; print(secrets.token_hex(32))" > .local/hmac.key
+```
+
+Run both on one Docker network; the database lives on the `scam-map-data` volume:
+
+```bash
+docker network create scam-map
+```
+
+```bash
+docker run -d --name scam-map-api --network scam-map -p 8000:8000 -v scam-map-data:/data -e SCAM_MAP_HMAC_KEY="$(cat .local/hmac.key)" scam-map-api
+```
+
+```bash
+docker run -d --name scam-map-web --network scam-map -p 8501:8501 -e SCAM_MAP_API_URL=http://scam-map-api:8000 scam-map-web
+```
+
+Then load a licence (every route except `/health` and `/license` answers `403 LICENSE_EXPIRED` until you do):
+
+```bash
+uv run --project api python scripts/license_sign.py --licensee "Demo Bank" --expires-in 30d --out .local/licence.json
+```
+
+```bash
+curl -X POST -H "content-type: application/json" --data-binary @.local/licence.json http://127.0.0.1:8000/license
+```
+
+Stop with `docker stop scam-map-api scam-map-web`; start again with `docker start scam-map-api scam-map-web`. The
+API image starts as root only to take ownership of the `/data` volume, then runs as an unprivileged user.
+
+## Checking it
+
+These all work against the local address (they reset the server first):
+
+```bash
+scripts/verify_deployed.sh http://127.0.0.1:8000 --yes
+```
+
+```bash
+scripts/license_demo.sh http://127.0.0.1:8000 licence-5min.json licence-long.json
+```
+
+Logs go to the terminal (Option 1) or `docker logs scam-map-api` (Option 2). By design there is no per-request log:
+no URLs, query strings, identifiers or reporter fields are ever logged.
+
+## Judging
+
+The PRD scores the server row on a public HTTPS address; a laptop-only server scores zero on that row. If that
+is needed later, a tunnel in front of the local API (for example Cloudflare Tunnel or ngrok) gives one without a
+cloud host. That is not set up here.

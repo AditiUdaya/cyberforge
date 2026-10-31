@@ -1,7 +1,7 @@
 # API container: FastAPI on uvicorn, SQLite on a mounted /data volume. Build from the repo root:
 #   docker build -f infra/Dockerfile -t scam-map-api .
 # The Streamlit web app is a separate service with its own image (infra/Dockerfile.web, D55).
-# Owner: A. Filled in by: B0 (image), A0 (volume ownership for Fly.io).
+# Owner: A. Filled in by: B0 (image), A0 (volume ownership).
 
 FROM ghcr.io/astral-sh/uv:0.12.7 AS uv
 

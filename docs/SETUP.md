@@ -72,6 +72,8 @@ uv run --project api python -c "import secrets; print(secrets.token_hex(32))"
 
 ## 5. Run it locally
 
+Everything at once, with demo data: `scripts/run_local.sh` (see the README). Or start each part:
+
 API on port 8000:
 
 ```bash
@@ -165,9 +167,10 @@ docker run --rm -p 8000:8000 -v scam-map-data:/data -e SCAM_MAP_HMAC_KEY=<your k
 
 The database and the uploaded licence live on the `/data` volume, so they survive container restarts.
 
-## 9. Deploy
+## 9. Hosting
 
-Two apps on Fly.io (DECISIONS D55, D56). Step-by-step commands are in [infra/README.md](../infra/README.md).
+The app is hosted on a laptop (DECISIONS D59): `scripts/run_local.sh`, or the two Docker containers. Both are in
+[infra/README.md](../infra/README.md).
 
 ## Windows notes
 

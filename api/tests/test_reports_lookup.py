@@ -208,3 +208,10 @@ def test_database_holds_no_raw_identifier_reporter_or_note(
         "police",
     ]:
         assert secret.encode() not in raw, secret
+
+
+def test_times_are_shown_to_the_second(client: TestClient) -> None:
+    report(client, occurred_at="2026-10-27T18:21:04.907913+05:30")
+    body = lookup(client, "phone", "+919876543210").json()
+    assert body["first_seen"] == "2026-10-27T18:21:04+05:30"
+    assert body["evidence"][0]["occurred_at"] == "2026-10-27T18:21:04+05:30"
