@@ -10,7 +10,7 @@ shared/ is a contract: change it only with the other person's OK.
 - Deployed gate: scripts/verify_deployed.sh https://<host> (resets the server)
 - API: cd api && uv run uvicorn app.main:app --reload
 - Simulator: cd judge && uv run python runner.py --seeds holdout --target local
-- Web: cd web && npm ci && npm run dev
+- Web: cd web && uv run streamlit run app.py (Streamlit, DECISIONS D54; reads SCAM_MAP_API_URL)
 
 ## Rules
 - Routes, request and reply fields exactly as PRD Appendix A. Extra reply fields are fine; never rename or drop one.
@@ -23,5 +23,5 @@ shared/ is a contract: change it only with the other person's OK.
 - The licence private key never enters the repo or the server. The licence is checked on every request and renewed without a restart. Expiry locks; it never deletes.
 - All code is written during the event. Do not copy code from earlier projects or from ScamShield India.
 - Zero warnings and errors: lint, types, build, tests, browser console. Fix causes; never add ignore comments.
-- No new dependency unless npm audit or pip-audit shows 0 findings with it. Pin exact versions.
+- No new dependency unless pip-audit shows 0 findings with it. Pin exact versions.
 - Write the task's tests first; the task is done only when they pass.

@@ -66,10 +66,10 @@ scam-map/
     scanners/                responses, logs, database, wording, hardcoding
     perf.py                  latency over HTTPS
     seeds.toml               tuning seeds and held-out seeds
-  web/                       Person A: React, Vite, TypeScript, Tailwind, Biome
-    src/pages/  src/i18n/  src/icons/  src/extract/  src/api/
-    e2e/
-  infra/                     Dockerfile and host config
+  web/                       Person A: Streamlit, Python 3.12, uv, ruff, mypy (DECISIONS D54)
+    app.py  pages/  i18n/  icons/  extract/  api_client.py
+    tests/                   Streamlit AppTest UI tests
+  infra/                     API and web Dockerfiles, host config (two services, D55)
   scripts/
     check.sh                 local zero-warning gate
     verify_deployed.sh       full test run against the HTTPS address

@@ -26,14 +26,13 @@ echo "== Judge (in-process, held-out seeds)"
   uv run python -m scanners.all --target local
   uv run pip-audit)
 
-echo "== Web"
+echo "== Web (Streamlit)"
 (cd web
-  npm ci --no-fund
-  npm audit --audit-level=low
-  npx biome ci --error-on-warnings .
-  npx tsc --noEmit
-  npm run build 2>&1 | tee /tmp/web-build.log
-  if grep -qi "warn" /tmp/web-build.log; then echo "build warnings"; exit 1; fi
-  npx playwright test)
+  uv sync --frozen
+  uv run ruff check .
+  uv run ruff format --check .
+  uv run mypy --strict .
+  uv run pytest -q -W error
+  uv run pip-audit)
 
 echo "check passed on $(date -u +%F)"
