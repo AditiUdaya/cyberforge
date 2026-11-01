@@ -35,7 +35,7 @@ select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
 "generator.py" = ["S311"]
 "metamorphic.py" = ["S311"]
 "perf.py" = ["S311"]
-"tests/**" = ["S101"]
+"tests/**" = ["S101", "S603"]
 
 [tool.mypy]
 strict = true

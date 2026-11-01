@@ -1,0 +1,13 @@
+stateDiagram-v2
+  [*] --> Valid: POST /license, signature verified
+  Valid --> Valid: request, now < expires_at
+  Valid --> Expired: now >= expires_at
+  Valid --> Expired: clock more than 1 min behind high-water mark
+  Expired --> Expired: any route except /health, /license gives 403 LICENSE_EXPIRED
+  Expired --> Valid: POST /license, new licence, hot swap, no restart
+  Valid --> Valid: POST /license, renewal persisted to license_state
+  Expired --> Rejected: bad signature or date
+  Rejected --> Expired: 400, state unchanged
+  note right of Expired
+    Data locked, never deleted
+  end note

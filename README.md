@@ -1,4 +1,4 @@
-<!-- How to run and explain the Community Scam Map (judged, PRD row 7). Owner: A and B. Filled in by: A7 (run steps) and B9 (trust rules, licence). -->
+<!-- How to run and explain the Community Scam Map. Owner: A and B. -->
 # Community Scam Map
 
 People warn each other about scam phone numbers, UPI IDs, links and SMS senders, and check one before they
@@ -15,6 +15,27 @@ the rules were never tuned on.
 | API | `http://<laptop address>:8000` on the same Wi-Fi; `scripts/run_local.sh` prints the address (http://127.0.0.1:8000 on the laptop itself) |
 | Mobile website | `http://<laptop address>:8501` (Streamlit, English and Hindi, works with icons alone) |
 | Brief | [docs/PRD.pdf](docs/PRD.pdf), our plan in [docs/SPEC.md](docs/SPEC.md), design in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+
+## For the judges: five minutes
+
+1. Start the app on the host laptop with `scripts/run_local.sh`. It prints the Wi-Fi address, for example `http://192.168.60.86:8000`.
+2. From any device on the same Wi-Fi: `curl http://<address>:8000/health` returns `{"ok":true}`.
+3. Every route in PRD Appendix A is there with the exact fields. Reset with `POST /admin/reset`, then load reports
+   with `POST /reports` as you like.
+4. The licence demo (PRD row 5) is a four-step script: [docs/DEMO.md](docs/DEMO.md).
+5. Our own evidence, in plain numbers: [docs/RESULTS.md](docs/RESULTS.md). The PRD scoring table, row by row, is in
+   [docs/DEMO.md](docs/DEMO.md).
+
+What to submit, from the brief, and where each item is:
+
+| Item | Where |
+| --- | --- |
+| Code in a Git repository | this repository |
+| Server address, working during judging | `http://<laptop address>:8000` on the judges' Wi-Fi (see Known limits: `http`, not `https`) |
+| App | Mobile website on port 8501 (no APK) |
+| README: run it, trust rules, licence | this file: [Run it](#run-it), [How trust rules work](#how-trust-rules-work), [How the licence works](#how-the-licence-works) |
+| Demo video, up to 3 minutes | link given by the team at submission; the script is in [docs/DEMO.md](docs/DEMO.md) |
+| Two licence files | `licence-long.json` is kept ready; the 5-minute file is signed just before the demo ([docs/DEMO.md](docs/DEMO.md)) |
 
 ## Run it
 
@@ -74,6 +95,17 @@ Open http://127.0.0.1:8501 on a phone-sized window. Try the PRD's example messag
 ```bash
 cd judge && uv sync --frozen && uv run python runner.py --seeds holdout --target local
 ```
+
+**5. Load the evaluation data with plain curl**, the way the judges' tool will. This **erases** the running server's
+data, then sends every report of the five datasets (902 reports, 4 disputes) as its own `curl -X POST .../reports`,
+checks each reply's status, and scores the outcomes per PRD row:
+
+```bash
+scripts/curl_load.sh http://127.0.0.1:8000
+```
+
+The generated scripts, one literal curl command per line, are kept in `.local/curl/` so every request can be read.
+When it finishes, all five datasets are loaded in the app to browse.
 
 Hosting options (one command, or the two Docker containers) are in [infra/README.md](infra/README.md).
 
@@ -135,7 +167,21 @@ A licence is a small signed file:
 The PRD's four-step demo, end to end against any server (waits for the short licence to expire):
 
 ```bash
-scripts/license_demo.sh http://127.0.0.1:8000 licence-5min.json licence-long.json
+DEMO_NUMBER=<a number with reports> scripts/license_demo.sh http://127.0.0.1:8000 licence-5min.json licence-long.json
+```
+
+A licence's `expires_at` is an absolute time, so **sign the 5-minute file just before the demo**; an
+already-expired file is refused. Run this from the repo root (the private key must exist: `scripts/license_keygen.py`
+makes it once):
+
+```bash
+uv run --project api python scripts/license_sign.py --licensee "Demo Bank" --expires-in 5m --out .local/demo/licence-5min.json
+```
+
+The long licence is signed once:
+
+```bash
+uv run --project api python scripts/license_sign.py --licensee "Demo Bank" --expires-in 365d --out .local/demo/licence-long.json
 ```
 
 ## Privacy
@@ -153,17 +199,18 @@ check every reply, every server log line and the raw database bytes for anything
 
 ## Tests
 
-| Layer | What | Command | Result (31 Oct) |
+| Layer | What | Command | Result (1 Nov) |
 | --- | --- | --- | --- |
-| Unit and property | Normaliser, masking, verdicts, trust rules, licence; Hypothesis with 1,000 examples per property | `cd api && uv run pytest` | 400+ tests, 98% coverage of `core/` and `license/` |
+| Unit and property | Normaliser, masking, verdicts, trust rules, licence; Hypothesis with 1,000 examples per property | `cd api && uv run pytest` | 432 tests, 99% coverage |
 | Contract | Every PRD route, status and reply schema | `cd judge && uv run python contract.py --target local` | 33/33 |
-| Judge simulator | 15 scenario families, tuned on seeds 1 to 10, reported on held-out seeds 101 to 150 | `uv run python runner.py --seeds holdout --target local` | 750/750 scenarios, all thresholds met |
+| Judge simulator | 15 scenario families, tuned on seeds 1 to 10, reported on held-out seeds 101 to 150 | `uv run python runner.py --seeds holdout --target local` | 750/750 scenarios, all thresholds met; fresh seeds at 75, 300 and 900 scenarios all score 82.0 of 82 |
 | Metamorphic | Same scenario shuffled, re-spelled, other time offsets, junk mixed in | `uv run python metamorphic.py --seeds holdout --target local` | 1,600/1,600 identical |
 | Privacy scanners | Replies, logs, database, wording, hardcoding | `uv run python -m scanners.all --target local` | 0 findings |
 | Evaluation datasets | 5 fixed PRD-format datasets (tricks, real scams, verified and disputes, map and alerts, a judging-day mix), scored per PRD row | `uv run python score_dataset.py --target local` | 121/121 checks |
+| The same datasets, loaded with plain `curl` | One curl per report (902) plus 4 disputes, statuses checked, then scored | `scripts/curl_load.sh http://127.0.0.1:8000` | 116/116 checks, 82.0 of 82 ([docs/RESULTS.md](docs/RESULTS.md)) |
 | Robustness | Fuzzed bodies and queries, 50 concurrent reports | in the API tests | no 5xx, exact counts |
 | Performance | 100k reports, 2,000 lookups, 500 reports | `uv run python perf.py --target <url>` | see [docs/RESULTS.md](docs/RESULTS.md) |
-| UI | Every screen in English, Hindi and icon-only mode | `cd web && uv run pytest` | 180 tests |
+| UI | Every screen in English, Hindi and icon-only mode | `cd web && uv run pytest` | 197 tests |
 
 `scripts/check.sh` runs all local layers; `scripts/verify_deployed.sh https://<api> --yes` runs them against the
 deployed server (it resets it first).
@@ -189,7 +236,6 @@ docs/     PRD, spec, architecture, decisions, results, setup
 - **One dispute per number.** A second dispute on the same number gets `429`, so it cannot be spammed.
 - **Nothing older than 30 days is shown as an alert or activity.** Such a report is still accepted and counted
   (the map can show it with a wider window); it just never appears in the live panel.
-
 - **40 friends writing their own words over days** cannot be told apart from a real campaign (see above).
 - **Device id per session.** The website's anonymous id lasts one browser session (DECISIONS D57); a returning
   visitor on another network counts as a new reporter.
@@ -198,3 +244,29 @@ docs/     PRD, spec, architecture, decisions, results, setup
 - **Hosted on a laptop, reached over the Wi-Fi** (DECISIONS D59, D62). The judges curl `http://<laptop address>:8000`
   from the same network; the address is plain `http`, and the PRD's example is HTTPS. Windows Firewall needs the
   two ports opened ([infra/README.md](infra/README.md)).
+- **Rows 6 and 7 are judged by people** and our tools cannot score them: the usability stopwatch test and the demo
+  video are done by hand.
+
+## Future scope
+
+- **Weigh reports by city.** A report from outside a number's home city would count for less until reporters from
+  that city have also reported it, so a distant attacker cannot brand a local business. Reports already carry an
+  area, so this needs a city per area and one extra weight in `trust_config.py`. It is a proposal, not built.
+- Public HTTPS hosting and an Android app.
+- A review queue for disputes and an updatable, signed verified-business list.
+- Postgres and caching for many cities; more languages; alerts pushed to phones.
+
+## Documents
+
+| File | What it is |
+| --- | --- |
+| [docs/PRD.pdf](docs/PRD.pdf) | The organisers' brief (source of truth) |
+| [docs/SPEC.md](docs/SPEC.md) | Build plan and scoring map |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design and request paths |
+| [docs/DECISIONS.md](docs/DECISIONS.md) | Every design decision and why |
+| [docs/DEMO.md](docs/DEMO.md) | Demo script, licence steps, PRD scoring table |
+| [docs/RESULTS.md](docs/RESULTS.md) | Test runs and measurements |
+| [docs/SETUP.md](docs/SETUP.md) | Developer setup |
+| [docs/Hackathon-Brief.pdf](docs/Hackathon-Brief.pdf) | Three-page summary: checklist, design, likely questions |
+| [infra/README.md](infra/README.md) | Hosting on a laptop and on the judges' Wi-Fi |
+| [docs/diagrams/](docs/diagrams) | Architecture, request flow, licence and schema diagrams |

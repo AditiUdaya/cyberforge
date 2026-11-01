@@ -1,0 +1,45 @@
+sequenceDiagram
+  autonumber
+  participant C as Client (web or judge)
+  participant G as Licence gate
+  participant R as Route
+  participant K as Core
+  participant D as SQLite
+
+  Note over C,D: POST /reports
+  C->>G: report JSON
+  G->>G: licence valid? (in-memory, vs clock)
+  G->>R: pass
+  R->>K: validate type, value, pincode, occurred_at
+  alt invalid
+    K-->>C: 400 {"error"}
+  end
+  K->>K: normalise identifier
+  K->>K: HMAC reporter_id, ip_prefix (or connection /24, /48)
+  K->>D: rate counter for reporter HMAC
+  alt more than 3 in an hour
+    K-->>C: 429
+  end
+  K->>K: fingerprint note, discard text
+  K->>D: insert report
+  K->>K: re-cluster identifier, set counted / merged / suspect
+  K->>D: update cases row and area_day (counted only)
+  R-->>C: 201 {report_id, case_id, merged}
+
+  Note over C,D: GET /lookup?type&value
+  C->>G: query
+  G->>R: pass
+  R->>K: validate and normalise
+  alt invalid
+    K-->>C: 400 {"error"}
+  end
+  K->>D: verified list?
+  alt verified
+    K-->>C: 200 VERIFIED_BUSINESS
+  end
+  K->>D: cases row by identifier HMAC (one indexed read)
+  alt no row
+    K-->>C: 200 NO_REPORTS
+  end
+  K->>K: verdict, challenge cap, mask until 3 distinct reporters
+  R-->>C: 200 verdict, counts, display_value, evidence, challenged
