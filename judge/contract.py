@@ -336,6 +336,13 @@ def _junk(c: Client) -> None:
         expect(c.post("/reports", json=sent), 400, "error")
 
 
+@check("A second dispute on the same number is 429 {error}")
+def _dispute_once(c: Client) -> None:
+    sent = PRD_CHALLENGE | {"identifier_value": _random_mobile()}
+    expect(c.post("/challenges", json=sent), 201, "challenges.reply")
+    expect(c.post("/challenges", json=sent), 429, "error")
+
+
 @check("Unknown pincode, future time and time without offset are 400")
 def _bad_report_fields(c: Client) -> None:
     for change in [

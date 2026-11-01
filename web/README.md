@@ -13,6 +13,10 @@ The mobile website, in Streamlit. It talks to the API at `SCAM_MAP_API_URL` and 
 | Licence | Who it is licensed to and until when; upload a licence file |
 | How it works | The trust and privacy rules in plain words |
 
+Every screen has a **live panel** on the right (below the content on a phone), refreshed every 3 seconds: live
+alerts for all areas, then every event: reports counted, repeats merged, coordinated bursts, junk rejected,
+reporters slowed down, new known scams, disputes and alerts. Numbers are always masked there.
+
 Every screen works in English and Hindi, and with icons only. Any `LICENSE_EXPIRED` reply shows
 "Licence expired. Contact your provider."
 

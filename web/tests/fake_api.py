@@ -59,15 +59,75 @@ UNREPORTED = {
 }
 
 
+def event(kind: str, **fields: Any) -> dict[str, Any]:
+    base = {
+        "at": "2026-11-01T00:12:30+05:30",
+        "kind": kind,
+        "pincode": None,
+        "locality": None,
+        "scam_type": None,
+        "channel": None,
+        "identifier_type": None,
+        "display": None,
+        "detail": None,
+        "count": 1,
+    }
+    return base | fields
+
+
+EVENTS = [
+    event(
+        "report",
+        pincode="560102",
+        locality="HSR Layout",
+        scam_type="digital-arrest",
+        channel="Phone call",
+        identifier_type="phone",
+        display="98XXXXX210",
+    ),
+    event(
+        "burst",
+        pincode="560038",
+        locality="Indiranagar",
+        identifier_type="phone",
+        display="80XXXXX123",
+        count=40,
+    ),
+    event("merged", identifier_type="upi", display="r***@okaxis", count=2),
+    event("rejected", detail="invalid phone", count=3),
+    event("rate_limited", count=2),
+    event("known_scam", display="98XXXXX210"),
+    event("dispute", display="80XXXXX233"),
+    event("alert", pincode="560034", locality="Koramangala", detail="SPIKE"),
+    event(
+        "alert", pincode="560102", locality="HSR Layout", detail="NEW_TYPE", scam_type="sextortion"
+    ),
+]
+
+
 class FakeApi:
-    def __init__(self, *, expired: bool = False, report_status: int = 201) -> None:
+    def __init__(
+        self, *, expired: bool = False, report_status: int = 201, challenge_status: int = 201
+    ) -> None:
         self.expired = expired
         self.report_status = report_status
+        self.challenge_status = challenge_status
         self.reports: list[dict[str, Any]] = []
         self.challenges: list[dict[str, Any]] = []
         self.uploaded: list[dict[str, Any]] = []
         self.clusters: list[dict[str, Any]] = []
         self.found_alerts: list[dict[str, Any]] = []
+        self.events: list[dict[str, Any]] = list(EVENTS)
+        self.live_alerts: list[dict[str, Any]] = [
+            {
+                "type": "SPIKE",
+                "pincode": "560034",
+                "window": "24h",
+                "count": 11,
+                "baseline_per_day": 1.57,
+                "locality": "Koramangala",
+            },
+        ]
         self.licence_body: dict[str, Any] = {
             "licensee": "Demo Bank",
             "expires_at": "2027-10-31T19:54:26+05:30",
@@ -99,6 +159,8 @@ class FakeApi:
 
     def challenge(self, body: dict[str, Any]) -> dict[str, Any]:
         self._gate()
+        if self.challenge_status != 201:
+            raise ApiError(self.challenge_status, "refused")
         self.challenges.append(body)
         return {"challenge_id": "chl_1", "status": "under_review"}
 
@@ -112,3 +174,7 @@ class FakeApi:
     def areas(self) -> list[dict[str, Any]]:
         self._gate()
         return AREAS
+
+    def activity(self) -> dict[str, list[dict[str, Any]]]:
+        self._gate()
+        return {"events": self.events, "alerts": self.live_alerts}

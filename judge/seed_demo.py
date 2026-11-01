@@ -4,7 +4,7 @@
 
 Resets the server first. Uses the simulator's own scenarios, so the data shows exactly what the
 trust rules do: a real campaign becomes a known scam, 40 friends bombing a bakery do not, one area
-has a spike, another a new kind of scam. Never point it at the server the judges use.
+has a spike, another reported suspicious activity. Never point it at the server the judges use.
 
 Owner: B. Filled in by: B9.
 """
@@ -20,9 +20,10 @@ import httpx
 
 from families import r3_small, t1_bombing
 from families._shared import area_traffic, real_reports, steady_days
-from generator import Gen, Scenario, areas
+from generator import Gen, Scenario, areas, scam_types
 
 HSR, KORAMANGALA, INDIRANAGAR = "560102", "560034", "560038"
+NEW_KIND = "sextortion"
 
 
 def post_all(client: httpx.Client, scenario: Scenario) -> tuple[int, int]:
@@ -90,17 +91,25 @@ def main(argv: list[str] | None = None) -> int:
             post_all(client, s)
             tries.append((kind, raw, "reported by 5 people"))
 
-        # Steady traffic around Bengaluru, a spike in Koramangala, a new kind of scam in HSR.
+        # Steady traffic around Bengaluru, a spike in Koramangala, suspicious activity in HSR.
         g = Gen("demo-areas", 6, "demo", now)
         traffic = g.scenario("traffic")
+        # Each area has its own mix of scam types, as real areas do. Sextortion is kept out of the
+        # mix so it can show up as HSR Layout's reported suspicious activity, and Koramangala's
+        # spike reuses types it has already seen so it raises a SPIKE without a NEW_TYPE as well.
+        background = [t for t in scam_types() if t != NEW_KIND]
         bengaluru = sorted(p for p, a in areas().items() if a["city"] == "Bengaluru")
+        mixes: dict[str, list[str]] = {}
         for pincode in bengaluru:
-            area_traffic(g, traffic, pincode, steady_days(g, 1), "fake-kyc-link")
-        spike_hours = [g.rng.uniform(1, 20) for _ in range(9)]
-        area_traffic(g, traffic, KORAMANGALA, spike_hours, "fake-kyc-link")
+            mixes[pincode] = g.rng.sample(background, g.rng.randint(2, 4))
+            for hours in steady_days(g, 1):
+                area_traffic(g, traffic, pincode, [hours], g.rng.choice(mixes[pincode]))
+        for _ in range(9):
+            hours = g.rng.uniform(1, 20)
+            area_traffic(g, traffic, KORAMANGALA, [hours], g.rng.choice(mixes[KORAMANGALA]))
         post_all(client, traffic)
         new_type = g.scenario("new type")
-        area_traffic(g, new_type, HSR, [3.0], "sextortion")
+        area_traffic(g, new_type, HSR, [3.0], NEW_KIND)
         post_all(client, new_type)
 
         print("Demo data loaded. Try these on the Check screen:\n")
@@ -111,7 +120,14 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {value:<34} {body['verdict']:<18} {people:>2} {who}  ({what})")
         print("  1930                               VERIFIED_BUSINESS        (helpline)")
         print("  12345                              rejected as junk")
-        print("\nMap: Koramangala shows a SPIKE alert, HSR Layout a NEW_TYPE alert (sextortion).")
+        print("\nAlerts on the Map screen (read back from the API):")
+        for pincode in sorted(areas()):
+            for alert in client.get("/alerts", params={"pincode": pincode}).json()["alerts"]:
+                if alert["type"] == "SPIKE":
+                    detail = f"{alert['count']} today, about {alert['baseline_per_day']}/day before"
+                else:
+                    detail = f"reported suspicious activity: {alert['scam_type']}"
+                print(f"  {areas()[pincode]['locality']:<16} {alert['type']:<9} {detail}")
     return 0
 
 

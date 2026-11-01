@@ -5,6 +5,7 @@ Owner: B. Filled in by: B0.
 
 from __future__ import annotations
 
+import shutil
 import sqlite3
 from pathlib import Path
 
@@ -75,5 +76,37 @@ def test_repo_migrations_apply_on_startup(client: TestClient, db_path: Path) -> 
     conn = connect(db_path)
     try:
         assert applied_versions(conn) == expected
+    finally:
+        conn.close()
+
+
+def test_event_age_migration_backfills_from_the_case(tmp_path: Path) -> None:
+    older = tmp_path / "older"
+    older.mkdir()
+    for path in MIGRATIONS_DIR.glob("*.sql"):
+        if path.stem < "0007":
+            shutil.copy(path, older / path.name)
+    conn = connect(tmp_path / "x.sqlite")
+    try:
+        apply_migrations(conn, older)
+        conn.execute(
+            "INSERT INTO cases (case_id, identifier_type, identifier_hmac)"
+            " VALUES ('c1', 'phone', 'h')"
+        )
+        conn.execute(
+            "INSERT INTO reports (report_id, case_id, reporter_hmac, ip_prefix_hmac, channel,"
+            " scam_type, pincode, occurred_at, reported_at, note_length, has_screenshot,"
+            " amount_lost_inr, origin) VALUES ('r', 'c1', 'a', 'b', 'Phone call', 'other',"
+            " '560102', '2026-09-15T06:30:00+00:00', '2026-10-31T00:00:00+00:00', 0, 0, 0, 'web')"
+        )
+        for kind, case in (("report", "c1"), ("rejected", None)):
+            conn.execute(
+                "INSERT INTO events (at, kind, case_id) VALUES ('2026-10-31T19:00:00+00:00', ?, ?)",
+                (kind, case),
+            )
+        assert apply_migrations(conn, MIGRATIONS_DIR) == ["0007_event_age"]
+        rows = {r[0]: r[1] for r in conn.execute("SELECT kind, occurred_at FROM events")}
+        assert rows["report"] == "2026-09-15T06:30:00+00:00"
+        assert rows["rejected"] == "2026-10-31T19:00:00+00:00"
     finally:
         conn.close()

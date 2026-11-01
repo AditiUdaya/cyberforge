@@ -186,7 +186,7 @@ def test_map_lists_clusters_and_alerts() -> None:
     text = text_of(screen("map", api))
     assert "HSR Layout" in text and "12 reports" in text
     assert "10 in 24 hours" in text
-    assert "A new kind of scam near you" in text
+    assert "Reported suspicious activity near you" in text
 
 
 def test_map_without_reports_is_calm() -> None:
@@ -254,3 +254,35 @@ def test_icon_switch_writes_back_to_the_lasting_choice() -> None:
     at = screen("check", FakeApi())
     at = at.toggle[0].set_value(True).run()
     assert at.session_state["icons_only"] is True
+
+
+def fill_challenge(at: AppTest) -> AppTest:
+    at.text_input[0].input("+91 80 4100 2233")
+    at.text_input[1].input("Fresh Bakes")
+    at.text_input[2].input("owner@example.com")
+    at.text_area[0].input("GST certificate attached.")
+    return click(at, "Send for review")
+
+
+def test_a_second_dispute_shows_the_one_per_number_message() -> None:
+    api = FakeApi(challenge_status=429)
+    at = fill_challenge(screen("challenge", api))
+    text = text_of(at)
+    assert "A dispute is already under review for this number" in text
+    assert "Only one is allowed per number" in text
+    assert "under review" in text and "Thank you" not in text
+
+
+def test_the_dispute_limit_message_is_in_hindi_too() -> None:
+    at = screen("challenge", FakeApi(challenge_status=429), lang="hi")
+    at.text_input[0].input("+91 80 4100 2233")
+    at.text_input[1].input("Fresh Bakes")
+    at.text_input[2].input("owner@example.com")
+    at.text_area[0].input("GST")
+    at = click(at, STRINGS["challenge_submit"]["hi"])
+    assert "हर नंबर पर सिर्फ़ एक आपत्ति" in text_of(at)
+
+
+def test_no_screen_says_a_new_kind_of_scam() -> None:
+    for name in ("check", "map", "how"):
+        assert "new kind of scam" not in text_of(screen(name, FakeApi())).lower()

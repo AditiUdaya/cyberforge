@@ -35,6 +35,7 @@ class Api(Protocol):
     def licence(self) -> dict[str, Any]: ...
     def upload_licence(self, doc: dict[str, Any]) -> dict[str, Any]: ...
     def areas(self) -> list[dict[str, Any]]: ...
+    def activity(self) -> dict[str, list[dict[str, Any]]]: ...
 
 
 class HttpApi:
@@ -90,3 +91,7 @@ class HttpApi:
     def areas(self) -> list[dict[str, Any]]:
         found: list[dict[str, Any]] = self._call("GET", "/app/areas")["areas"]
         return found
+
+    def activity(self) -> dict[str, list[dict[str, Any]]]:
+        feed: dict[str, list[dict[str, Any]]] = self._call("GET", "/app/activity")
+        return feed

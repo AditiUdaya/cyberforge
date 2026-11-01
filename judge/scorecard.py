@@ -27,8 +27,8 @@ ROWS: dict[str, tuple[str, int]] = {
     "bonus:fakes": ("Bonus: fakes never alert", 2),
 }
 NOT_MEASURED = {
-    "2": "latency is measured by perf.py (B8)",
-    "4": "privacy scanners land in B7",
+    "2": "load latency: perf.py",
+    "4": "full privacy scan: python -m scanners.all",
     "5": "only 'licence survives reset'; the demo is scripts/license_demo.sh",
 }
 SHOW_FAILURES = 25

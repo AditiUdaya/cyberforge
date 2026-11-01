@@ -123,8 +123,8 @@ STRINGS: dict[str, dict[Lang, str]] = {
         "hi": "आज आस-पास स्कैम रिपोर्ट बढ़ीं: 24 घंटे में {count}, आमतौर पर रोज़ लगभग {base}।",
     },
     "alert_new": {
-        "en": "A new kind of scam near you: {kind}",
-        "hi": "आस-पास नए तरह का स्कैम: {kind}",
+        "en": "Reported suspicious activity near you: {kind}",
+        "hi": "आस-पास संदिग्ध गतिविधि की रिपोर्ट: {kind}",
     },
     "no_alerts": {
         "en": "No alerts. Nothing unusual right now.",
@@ -155,6 +155,10 @@ STRINGS: dict[str, dict[Lang, str]] = {
         "en": "Thank you. It is now marked as under review.",
         "hi": "धन्यवाद। इसे अब जांच में दिखाया जा रहा है।",
     },
+    "challenge_limit": {
+        "en": "A dispute is already under review for this number. Only one is allowed per number.",
+        "hi": "इस नंबर के लिए आपत्ति पहले से जांच में है। हर नंबर पर सिर्फ़ एक आपत्ति दी जा सकती है।",
+    },
     "challenge_missing": {"en": "Please fill in every field.", "hi": "कृपया हर जानकारी भरें।"},
     # Licence
     "licence_to": {"en": "Licensed to", "hi": "लाइसेंसधारी"},
@@ -177,6 +181,48 @@ STRINGS: dict[str, dict[Lang, str]] = {
         "en": "Cannot reach the server right now. Please try again in a moment.",
         "hi": "अभी सर्वर से जुड़ नहीं पा रहे। कृपया थोड़ी देर में फिर कोशिश करें।",
     },
+    # Live panel
+    "panel_alerts": {"en": "Live alerts", "hi": "ताज़ा चेतावनी"},
+    "panel_activity": {"en": "Activity", "hi": "गतिविधि"},
+    "panel_quiet": {"en": "Nothing yet.", "hi": "अभी कुछ नहीं।"},
+    "panel_no_alerts": {"en": "No alerts right now.", "hi": "अभी कोई चेतावनी नहीं।"},
+    "panel_privacy": {
+        "en": "Numbers are always masked here. No reporter details are ever shown or kept.",
+        "hi": "यहां नंबर हमेशा छिपे रहते हैं। रिपोर्ट करने वाले की कोई जानकारी न दिखती है, न रखी जाती है।",
+    },
+    "alert_spike_short": {
+        "en": "{area}: {count} reports in 24 hours, usually about {base} a day",
+        "hi": "{area}: 24 घंटे में {count} रिपोर्ट, आमतौर पर रोज़ लगभग {base}",
+    },
+    "alert_new_short": {
+        "en": "{area}: reported suspicious activity, {kind}",
+        "hi": "{area}: संदिग्ध गतिविधि की रिपोर्ट, {kind}",
+    },
+    "ev_report": {"en": "Report counted", "hi": "रिपोर्ट गिनी गई"},
+    "ev_merged": {
+        "en": "Repeat from the same person or connection, counted once",
+        "hi": "एक ही व्यक्ति या कनेक्शन से दोबारा, एक बार गिना गया",
+    },
+    "ev_burst": {
+        "en": "Coordinated burst: {count} reports counted as one person",
+        "hi": "मिलकर भेजी गई रिपोर्ट: {count} रिपोर्ट एक व्यक्ति मानी गईं",
+    },
+    "ev_rejected": {"en": "Junk report rejected: {reason}", "hi": "बेकार रिपोर्ट अस्वीकार: {reason}"},
+    "ev_rate_limited": {
+        "en": "Reporter slowed down: too many reports in an hour",
+        "hi": "रिपोर्ट करने वाला धीमा किया गया: एक घंटे में बहुत ज़्यादा रिपोर्ट",
+    },
+    "ev_known_scam": {"en": "Now a known scam", "hi": "अब जाना-पहचाना स्कैम"},
+    "ev_dispute": {"en": "Dispute filed, now under review", "hi": "आपत्ति दर्ज, अब जांच में"},
+    "ev_alert": {"en": "Alert raised", "hi": "चेतावनी जारी"},
+    "kind_spike": {"en": "Spike in reports", "hi": "रिपोर्ट में उछाल"},
+    "reason_invalid phone": {"en": "not a valid phone number", "hi": "सही फ़ोन नंबर नहीं"},
+    "reason_invalid upi": {"en": "not a valid UPI ID", "hi": "सही यूपीआई आईडी नहीं"},
+    "reason_invalid url": {"en": "not a valid link", "hi": "सही लिंक नहीं"},
+    "reason_invalid sender_id": {"en": "not a valid SMS sender", "hi": "सही एसएमएस भेजने वाला नहीं"},
+    "reason_unknown area": {"en": "unknown area", "hi": "अनजान इलाका"},
+    "reason_time in the future": {"en": "time in the future", "hi": "भविष्य का समय"},
+    "reason_invalid time": {"en": "invalid time", "hi": "गलत समय"},
     # How it works
     "how_body": {
         "en": (

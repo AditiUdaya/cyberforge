@@ -39,3 +39,20 @@ Notes on that run against https://scam-map-api-shubhang.fly.dev (Fly.io, Singapo
   purpose afterwards took about 4 s from stop to the first `200`, so the 30 s stalls were the network path from
   Bengaluru to Singapore, not the server.
 - After redeploying: contract 32/32 against the live address, licence intact.
+
+## Evaluation datasets, local, 31 Oct
+
+`judge/score_dataset.py` loaded the five datasets in `judge/datasets/` (902 PRD-format reports, 4 disputes) into
+the local server and scored them: **119/119 checks passed** (121/121 after the live panel added two), an estimated 82.0 of the 85 points the datasets can
+measure (rows 6 and 7 are judged by people).
+
+| Dataset | Reports | Checks |
+| --- | --- | --- |
+| 01 tricks (40 friends x3, 22 accounts, spam x2, 19 kinds of junk) | 173 | 28/28 |
+| 02 real scams (all four types, wave, 1-3 reporters, empty and Hindi notes, offsets) | 55 | 25/25 |
+| 03 verified and disputes (all 19 Appendix C values, 4 disputes) | 158 | 32/32 |
+| 04 map and alerts (windows, radius edge, other cities, every alert rule, fakes) | 199 | 18/18 |
+| 05 judging-day mix (all 25 areas) | 317 | 16/16 |
+
+The first scoring run found 4 failures, all in the dataset builder (verified short numbers spelled as mobiles; a
+test area inside the radius check). They were fixed in the builder; the server was unchanged.

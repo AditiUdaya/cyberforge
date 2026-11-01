@@ -268,3 +268,38 @@ def test_unknown_scam_types_never_raise_new_type(client: TestClient) -> None:
     steady(client, HSR, 1, "job-offer")
     today(client, HSR, 1, "crypto-doubler")
     assert alerts(client, HSR) == []
+
+
+def test_a_second_dispute_on_the_same_number_is_refused(client: TestClient) -> None:
+    assert client.post("/challenges", json=CHALLENGE).status_code == 201
+    for spelling in ("+91 80 4555 0123", "080-45550123", "9180 45550123"):
+        again = client.post("/challenges", json=CHALLENGE | {"identifier_value": spelling})
+        assert again.status_code == 429, spelling
+        assert "already" in again.json()["error"]
+        assert "owner@example.com" not in again.text
+    assert lookup(client)["challenged"] is True
+
+
+def test_a_different_number_can_still_be_disputed(client: TestClient) -> None:
+    assert client.post("/challenges", json=CHALLENGE).status_code == 201
+    other = CHALLENGE | {"identifier_value": "+91 80 4555 0999"}
+    assert client.post("/challenges", json=other).status_code == 201
+
+
+def test_the_refused_dispute_adds_no_activity_and_reset_allows_a_new_one(
+    client: TestClient,
+) -> None:
+    client.post("/challenges", json=CHALLENGE)
+    client.post("/challenges", json=CHALLENGE)
+    events = client.get("/app/activity").json()["events"]
+    assert [e["kind"] for e in events].count("dispute") == 1
+    client.post("/admin/reset")
+    assert client.post("/challenges", json=CHALLENGE).status_code == 201
+
+
+def test_a_verified_number_can_be_disputed_once_and_stays_verified(client: TestClient) -> None:
+    verified = CHALLENGE | {"identifier_value": "+91 80 4100 2233"}
+    assert client.post("/challenges", json=verified).status_code == 201
+    assert client.post("/challenges", json=verified).status_code == 429
+    params = {"type": "phone", "value": "+91 80 4100 2233"}
+    assert client.get("/lookup", params=params).json()["verdict"] == "VERIFIED_BUSINESS"

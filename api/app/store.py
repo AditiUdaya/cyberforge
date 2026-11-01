@@ -57,8 +57,8 @@ class EvidenceRow:
     pincode: str
 
 
-def add_report(conn: sqlite3.Connection, report: NewReport) -> tuple[str, bool]:
-    """Store a report under its identifier's case. Returns (case_id, merged)."""
+def add_report(conn: sqlite3.Connection, report: NewReport) -> tuple[str, bool, str]:
+    """Store a report under its identifier's case. Returns (case_id, merged, its trust status)."""
     row = conn.execute(
         "SELECT case_id FROM cases WHERE identifier_type = ? AND identifier_hmac = ?",
         (report.identifier_type, report.identifier_hmac),
@@ -77,7 +77,7 @@ def add_report(conn: sqlite3.Connection, report: NewReport) -> tuple[str, bool]:
         ).fetchone()
         is None
     )
-    conn.execute(
+    cursor = conn.execute(
         "INSERT INTO reports (report_id, case_id, reporter_hmac, ip_prefix_hmac, channel,"
         " scam_type, pincode, occurred_at, reported_at, note_length, note_sketch,"
         " has_screenshot, amount_lost_inr, origin, first_time)"
@@ -101,7 +101,27 @@ def add_report(conn: sqlite3.Connection, report: NewReport) -> tuple[str, bool]:
         ),
     )
     _recompute(conn, case_id)
-    return case_id, merged
+    status = conn.execute(
+        "SELECT status FROM reports WHERE id = ?", (cursor.lastrowid,)
+    ).fetchone()["status"]
+    return case_id, merged, str(status)
+
+
+def suspect_count(conn: sqlite3.Connection, case_id: str) -> int:
+    row = conn.execute(
+        "SELECT COUNT(*) FROM reports WHERE case_id = ? AND status = 'suspect'", (case_id,)
+    ).fetchone()
+    return int(row[0])
+
+
+def active_areas(conn: sqlite3.Connection, since: str) -> list[str]:
+    """Areas with counted reports since a time: the only places an alert can be live."""
+    rows = conn.execute(
+        "SELECT DISTINCT pincode FROM reports WHERE status = 'counted' AND occurred_at > ?"
+        " ORDER BY pincode",
+        (since,),
+    ).fetchall()
+    return [str(r["pincode"]) for r in rows]
 
 
 def recent_reports(conn: sqlite3.Connection, reporter_hmac: str, reported_at: datetime) -> int:
@@ -242,6 +262,15 @@ def area_events(conn: sqlite3.Connection, pincode: str, since: str) -> list[tupl
     return [(datetime.fromisoformat(r["occurred_at"]), str(r["scam_type"])) for r in rows]
 
 
+def has_challenge(conn: sqlite3.Connection, identifier_type: str, identifier_hmac: str) -> bool:
+    """Whether this identifier already has a dispute: only one is allowed per number."""
+    row = conn.execute(
+        "SELECT 1 FROM challenges WHERE identifier_type = ? AND identifier_hmac = ? LIMIT 1",
+        (identifier_type, identifier_hmac),
+    ).fetchone()
+    return row is not None
+
+
 def add_challenge(
     conn: sqlite3.Connection,
     *,
@@ -281,7 +310,8 @@ def add_challenge(
 
 
 def reset(conn: sqlite3.Connection) -> None:
-    """Delete every report, case and challenge. Reference data and the licence are kept."""
+    """Delete every report, case, challenge and event. Reference data and the licence are kept."""
+    conn.execute("DELETE FROM events")
     conn.execute("DELETE FROM reports")
     conn.execute("DELETE FROM challenges")
     conn.execute("DELETE FROM cases")
