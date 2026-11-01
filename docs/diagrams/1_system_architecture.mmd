@@ -1,0 +1,77 @@
+flowchart LR
+  subgraph Client["Clients"]
+    UI["Mobile website<br/>React, Vite, TypeScript, Tailwind<br/>English and Hindi, icon-first<br/>random device id as reporter_id"]
+    Judge["Judges' test tool<br/>PRD JSON with reporter_id and ip_prefix"]
+  end
+
+  subgraph Laptop["Your laptop, offline"]
+    Keygen["license_keygen.py"]
+    Sign["license_sign.py"]
+    PK[("~/.scam-map/license.key<br/>never in repo or on server")]
+    Keygen --> PK --> Sign
+  end
+
+  subgraph Host["Cloud host (HTTPS)"]
+    Static["Built web app<br/>static files"]
+    subgraph API["FastAPI, Python 3.12"]
+      Gate{"Licence gate<br/>every request<br/>now vs expires_at"}
+      subgraph Routes["routes/"]
+        R1["GET /health"]
+        R2["POST /reports"]
+        R3["GET /lookup"]
+        R4["GET /map"]
+        R5["GET /alerts"]
+        R6["POST /admin/reset"]
+        R7["POST /challenges"]
+        R8["GET / POST /license"]
+        R9["GET /app/areas"]
+      end
+      subgraph Core["core/"]
+        Norm["normalise + validate"]
+        Ident["identity<br/>keyed HMACs"]
+        Notes["notes<br/>shingle fingerprints"]
+        Trust["trust + trust_config<br/>clusters, burst cap, weights"]
+        Verdict["verdict"]
+        Mask["mask"]
+        Areas["areas<br/>great-circle distance"]
+        MapV["mapview"]
+        Alerts["alerts<br/>SPIKE, NEW_TYPE"]
+      end
+      subgraph Lic["license/"]
+        Verify["verify<br/>Ed25519, public_key.pem"]
+        State["state<br/>in-memory licence,<br/>clock high-water mark"]
+      end
+      Clock["clock.py<br/>injectable now"]
+    end
+    DB[("SQLite, WAL mode<br/>persistent volume")]
+    Secrets["Env secrets<br/>HMAC keys"]
+  end
+
+  subgraph Shared["shared/ (contract)"]
+    Contract["contract/*.schema.json"]
+    Data["data/ areas, verified,<br/>scam_types, channels"]
+    Vectors["vectors/ normalise,<br/>mask, extract"]
+  end
+
+  UI -->|HTTPS| Gate
+  Judge -->|HTTPS| Gate
+  UI -.-> Static
+  Sign -->|"licence file via POST /license"| Gate
+
+  Gate -->|"valid, or /health, /license"| Routes
+  Gate -->|"expired"| E403["403 LICENSE_EXPIRED"]
+  Gate --- State
+  State --- Clock
+
+  R2 --> Norm --> Ident --> Notes --> Trust --> Verdict
+  R3 --> Norm
+  R3 --> Verdict --> Mask
+  R4 --> MapV --> Areas
+  R5 --> Alerts
+  R8 --> Verify --> State
+
+  Core --> DB
+  Lic --> DB
+  Ident --- Secrets
+  Data -.->|loaded at start| Core
+  Contract -.->|enforced by tests| Routes

@@ -14,6 +14,12 @@ from scam_web.ui import PAGES, tr
 
 st.set_page_config(page_title=tr("app_title"), page_icon="🛡️", layout="wide")
 
+st.markdown(
+    "<h1 style='font-weight:800;letter-spacing:-1px;margin:0'>"
+    "<span style='color:#222222'>block</span> <span style='color:#00d884'>128</span></h1>",
+    unsafe_allow_html=True,
+)
+
 navigation = st.navigation(
     [
         st.Page(

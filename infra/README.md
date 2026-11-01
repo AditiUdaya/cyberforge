@@ -66,6 +66,15 @@ API image starts as root only to take ownership of the `/data` volume, then runs
 
 These all work against the local address (they reset the server first):
 
+Load the five evaluation datasets with plain curl, one request per report, and score them per PRD row. The
+generated scripts are kept in `.local/curl/` so every command can be read:
+
+```bash
+scripts/curl_load.sh http://127.0.0.1:8000
+```
+
+The other checks:
+
 ```bash
 scripts/verify_deployed.sh http://127.0.0.1:8000 --yes
 ```

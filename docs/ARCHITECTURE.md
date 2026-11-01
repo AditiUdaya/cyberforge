@@ -2,26 +2,26 @@
 
 Oct 31, 2026 · Shubhang
 
-A mobile website backed by a Python API on a cloud server lets anyone check a phone number, UPI ID, link or SMS sender in under half a second, report a scam in under 60 seconds without an account, and see the last 7 days of reports by area. The API follows the organisers' contract in `docs/PRD.pdf` Appendix A exactly, because the judges' test tool scores the live server against it.
+A mobile website backed by a Python API, hosted on a laptop the judges reach over Wi-Fi (DECISIONS D59, D62), lets anyone check a phone number, UPI ID, link or SMS sender in under half a second, report a scam in under 60 seconds without an account, and see the last 7 days of reports by area. The API follows the organisers' contract in `docs/PRD.pdf` Appendix A exactly, because the judges' test tool scores the live server against it.
 
 ## At a glance
 
 ```mermaid
 flowchart LR
   subgraph Phone["Phone browser (mobile website)"]
-    UI["React app, English and Hindi<br/>Check, Report, Map, Challenge, Licence screens<br/>random anonymous device id"]
+    UI["Streamlit app, English and Hindi<br/>Check, Report, Map, Dispute, Licence, How it works<br/>random anonymous device id"]
   end
   Judge["Judges' test tool<br/>sends PRD JSON with reporter_id and ip_prefix"]
-  subgraph Cloud["Cloud host, HTTPS, always on"]
+  subgraph Host["Laptop on the judges Wi-Fi, always on"]
     Gate["Licence gate<br/>runs on every request"]
     Routes["PRD routes<br/>/health /reports /lookup /map /alerts<br/>/admin/reset /challenges /license"]
     Core["Core<br/>normalise, validate, trust rules,<br/>verdicts, masking, alerts"]
-    DB[("SQLite, WAL mode,<br/>persistent volume")]
+    DB[("SQLite, WAL mode,<br/>local file")]
   end
   Laptop["Your laptop, offline<br/>private licence key, signing script"]
 
-  UI -->|HTTPS| Gate
-  Judge -->|HTTPS| Gate
+  UI -->|HTTP| Gate
+  Judge -->|HTTP| Gate
   Gate --> Routes --> Core --> DB
   Laptop -->|licence file via POST /license| Gate
 ```
@@ -157,10 +157,10 @@ Errors use `{"error": "..."}` as the PRD shows. Expired licence is exactly `403 
 
 | Layer | Choice |
 | --- | --- |
-| App | React, Vite, TypeScript, Tailwind CSS, React Router, TanStack Query; Biome for lint and format |
-| Map | Leaflet through react-leaflet, drawing Appendix B points only; a plain background when tiles cannot load |
+| App | Streamlit (Python 3.12), httpx to the API; ruff and mypy for lint and types; screens tested with Streamlit `AppTest` |
+| Map | Appendix B points only, sized by count and coloured by severity |
 | Languages | English and Hindi from one small dictionary module (no i18n library); every control also has an icon |
-| Identity | A random device id in local storage, sent as `reporter_id`; not linked to anything |
+| Identity | A random id per browser session, sent as `reporter_id`; not linked to anything |
 
 | Screen | What it does |
 | --- | --- |
@@ -185,12 +185,12 @@ Errors use `{"error": "..."}` as the PRD shows. Expired licence is exactly `403 
 
 | Piece | Where | Notes |
 | --- | --- | --- |
-| API and built web app | One container on the cloud host, HTTPS | One address for the judges and the phone |
-| Database | SQLite file on the host's persistent volume | Survives deploys and restarts |
-| Secrets | Host environment: HMAC keys | The licence private key is never on the host |
+| API and website | Two services on one laptop: API on :8000, Streamlit on :8501 (`scripts/run_local.sh`, or two Docker containers) | One address for the judges and the phone, on the same Wi-Fi |
+| Database | SQLite file in `.local/` (or a Docker volume) | Survives restarts |
+| Secrets | `.local/hmac.key` or an environment variable | The licence private key is never on the server |
 | Licence files | Your laptop | One that expires in 5 minutes, one long one, made just before the demo |
 
-Before the demo: deploy, run the contract tests and the judge simulator against the HTTPS address, confirm the host has not slept, and rehearse the licence demo three times.
+Before the demo: start the app, run the contract tests and the judge simulator against the Wi-Fi address, keep the laptop awake, and rehearse the licence demo three times ([DEMO.md](DEMO.md)).
 
 ## Sources
 

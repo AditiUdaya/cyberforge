@@ -2,6 +2,8 @@
 
 Oct 31, 2026 · Shubhang
 
+> **Status, 1 Nov:** this is the original plan. Four decisions changed it, all in [DECISIONS.md](DECISIONS.md): the web app is Streamlit, not React and Playwright (D54, D55); hosting is a laptop on the judges' Wi-Fi, not a cloud host (D59, D62); the live activity panel was added (D60); disputes are limited to one per number (D61). Where this file mentions React, Vite, Playwright or a cloud host, read those decisions instead.
+
 Two people build the scam map in parallel, each driving Claude Code one numbered task at a time. The organisers' brief, `docs/PRD.pdf`, is the source of truth; `docs/ARCHITECTURE.md` says how we meet it and `docs/DECISIONS.md` records why. Where anything here conflicts with the PRD, the PRD wins.
 
 ## What we are scored on

@@ -11,6 +11,9 @@ licence survived. Scores are points per PRD row times the share of that row's ch
 --keep-data skips the final reset so the data stays for browsing. Never run this against the
 server the judges use: it resets it.
 
+--no-load checks a server that already holds the dataset (loaded with curl by curl_dataset.py),
+and --summary prints one PRD table from the result files that --json wrote.
+
 Owner: B. Filled in by: B9.
 """
 
@@ -128,31 +131,27 @@ def check(c: httpx.Client, e: dict[str, Any], timings: list[float]) -> Result:
     return Result(e["row"], e["label"], False, f"unknown expectation kind {kind!r}")
 
 
-def score_dataset(c: httpx.Client, path: Path, keep_data: bool) -> list[Result]:
-    doc = json.loads(path.read_text(encoding="utf-8"))
-    delta = datetime.now(UTC).replace(second=0, microsecond=0) - datetime.fromisoformat(
-        doc["_anchor"]
-    )
-    c.post("/admin/reset").raise_for_status()
-
-    results: list[Result] = []
+def status_results(
+    doc: dict[str, Any], reports: dict[str, int], disputes: list[int]
+) -> list[Result]:
+    """Compare the status of every request with what the dataset expects (201, 400 or 429)."""
     wrong_accept: list[str] = []
     wrong_refuse: list[str] = []
     for body in doc["reports"]:
-        status = c.post("/reports", json=shift(body, delta)).status_code
+        status = reports.get(body["report_id"])
         want = doc["expect_status"].get(body["report_id"], [201])
         if status not in want:
             target = wrong_accept if want == [201] else wrong_refuse
             target.append(f"{body['report_id']}: {status}, want {want}")
     refused = [b for b in doc["reports"] if b["report_id"] in doc["expect_status"]]
-    results.append(
+    results = [
         Result(
             "2",
             f"all {len(doc['reports']) - len(refused)} valid reports accepted",
             not wrong_accept,
             "; ".join(wrong_accept[:3]),
         )
-    )
+    ]
     if refused:
         results.append(
             Result(
@@ -162,14 +161,73 @@ def score_dataset(c: httpx.Client, path: Path, keep_data: bool) -> list[Result]:
                 "; ".join(wrong_refuse[:3]),
             )
         )
-    for challenge, want in zip(doc["challenges"], doc["challenge_status"], strict=True):
-        status = c.post("/challenges", json=challenge).status_code
+    for n, (challenge, want) in enumerate(
+        zip(doc["challenges"], doc["challenge_status"], strict=True)
+    ):
+        status = disputes[n] if n < len(disputes) else None
         results.append(
             Result(
                 "bonus:dispute",
                 f"dispute by {challenge['claimant_name']}: {want}",
                 status in want,
                 f"status {status}",
+            )
+        )
+    return results
+
+
+def read_status_log(path: Path) -> tuple[dict[str, int], list[int]]:
+    """The status of every request, as logged (status, tab, what) by a curl_dataset.py script."""
+    reports: dict[str, int] = {}
+    disputes: list[int] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        status, _, what = line.partition("\t")
+        if what.startswith("dispute "):
+            disputes.append(int(status))
+        else:
+            reports[what] = int(status)
+    return reports, disputes
+
+
+def load_with_python(c: httpx.Client, doc: dict[str, Any], delta: timedelta) -> list[Result]:
+    """Reset, then post every report and dispute with the Python client, checking each status."""
+    c.post("/admin/reset").raise_for_status()
+    reports = {
+        body["report_id"]: c.post("/reports", json=shift(body, delta)).status_code
+        for body in doc["reports"]
+    }
+    disputes = [c.post("/challenges", json=ch).status_code for ch in doc["challenges"]]
+    return status_results(doc, reports, disputes)
+
+
+def score_dataset(
+    c: httpx.Client,
+    path: Path,
+    keep_data: bool,
+    load: bool = True,
+    statuses: Path | None = None,
+) -> list[Result]:
+    """Load a dataset with the Python client (unless it is already loaded) and check it.
+
+    With load=False the server already holds the dataset, for example loaded with curl by
+    curl_dataset.py, so only the expected outcomes are checked and the data is always kept;
+    `statuses` is that script's status log, scored the same way as the Python client's replies.
+    """
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    delta = datetime.now(UTC).replace(second=0, microsecond=0) - datetime.fromisoformat(
+        doc["_anchor"]
+    )
+    if load:
+        results = load_with_python(c, doc, delta)
+    else:
+        results = status_results(doc, *read_status_log(statuses)) if statuses else []
+        licence = c.get("/license").json()
+        results.append(
+            Result(
+                "5",
+                "licence still valid after the reset and the load",
+                licence.get("valid") is True,
+                str(licence),
             )
         )
 
@@ -186,7 +244,7 @@ def score_dataset(c: httpx.Client, path: Path, keep_data: bool) -> list[Result]:
             )
         )
 
-    if not keep_data:
+    if load and not keep_data:
         c.post("/admin/reset").raise_for_status()
         leftovers = []
         for e in doc["expect"]:
@@ -226,33 +284,8 @@ def row_scores(results: list[Result]) -> dict[str, tuple[float, int, int]]:
     return {row: (ROWS[row][1] * p / n, p, n) for row, (p, n) in counts.items()}
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0] if __doc__ else None)
-    parser.add_argument("datasets", nargs="*", type=Path, help="default: every file in datasets/")
-    parser.add_argument("--target", default="local", help="'local' (own server) or a base URL")
-    parser.add_argument("--keep-data", action="store_true", help="leave the last dataset loaded")
-    parser.add_argument("--json", type=Path, help="also write every result here")
-    args = parser.parse_args(argv)
-    paths = args.datasets or sorted((HERE / "datasets").glob("*.json"))
-    if not paths:
-        parser.error("no datasets found; run build_datasets.py first")
-
-    def run(base: str) -> dict[str, list[Result]]:
-        out: dict[str, list[Result]] = {}
-        with httpx.Client(base_url=base, timeout=60) as client:
-            for i, path in enumerate(paths):
-                keep = args.keep_data and i == len(paths) - 1
-                out[path.stem] = score_dataset(client, path, keep)
-                print_report(path.stem, out[path.stem])
-        return out
-
-    if args.target == "local":
-        with local_server() as base:
-            by_dataset = run(base)
-    else:
-        by_dataset = run(args.target.rstrip("/"))
-
-    every = [r for results in by_dataset.values() for r in results]
+def print_prd_table(every: list[Result], datasets: int) -> int:
+    """The estimate per PRD row and the totals; the exit code is 1 when any check failed."""
     print("\nPRD row                              estimate   checks")
     scores = row_scores(every)
     total = 0.0
@@ -262,18 +295,74 @@ def main(argv: list[str] | None = None) -> int:
             total += got
             note = f"   ({NOT_MEASURED[row]})" if row in NOT_MEASURED else ""
             print(f"{title:<36} {got:5.1f}/{points:<3} {passed:>4}/{n}{note}")
-    print(f"{'Measured total':<36} {total:5.1f}")
-    print("Rows 6 (easy to report) and 7 (demo and code) are judged by people.")
+    possible = sum(points for row, (_, points) in ROWS.items() if row in scores)
+    print(f"{'Measured total':<36} {total:5.1f}/{possible}")
+    print("Not measured here: rows 6 (15) and 7 (10), judged by people. PRD total: 100 + 7 bonus.")
+    failed = [r for r in every if not r.passed]
+    print(f"\n{len(every) - len(failed)}/{len(every)} checks passed across {datasets} datasets")
+    return 1 if failed else 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0] if __doc__ else None)
+    parser.add_argument("datasets", nargs="*", type=Path, help="default: every file in datasets/")
+    parser.add_argument("--target", default="local", help="'local' (own server) or a base URL")
+    parser.add_argument("--keep-data", action="store_true", help="leave the last dataset loaded")
+    parser.add_argument("--json", type=Path, help="also write every result here")
+    parser.add_argument(
+        "--no-load",
+        action="store_true",
+        help="the server already holds the dataset (for example loaded with curl): only check it",
+    )
+    parser.add_argument(
+        "--statuses",
+        type=Path,
+        help="with --no-load and one dataset: the status log the curl script wrote (STATUS_LOG)",
+    )
+    parser.add_argument(
+        "--summary",
+        nargs="+",
+        type=Path,
+        metavar="JSON",
+        help="print one PRD table from result files written by --json, then exit",
+    )
+    args = parser.parse_args(argv)
+    if args.summary:
+        merged: dict[str, list[Result]] = {}
+        for file in args.summary:
+            for stem, rows in json.loads(file.read_text(encoding="utf-8")).items():
+                merged[stem] = [Result(**row) for row in rows]
+        return print_prd_table([r for rows in merged.values() for r in rows], len(merged))
+    paths = args.datasets or sorted((HERE / "datasets").glob("*.json"))
+    if not paths:
+        parser.error("no datasets found; run build_datasets.py first")
+    if args.statuses and not (args.no_load and len(paths) == 1):
+        parser.error("--statuses needs --no-load and exactly one dataset")
+
+    def run(base: str) -> dict[str, list[Result]]:
+        out: dict[str, list[Result]] = {}
+        with httpx.Client(base_url=base, timeout=60) as client:
+            for i, path in enumerate(paths):
+                keep = args.keep_data and i == len(paths) - 1
+                out[path.stem] = score_dataset(
+                    client, path, keep, load=not args.no_load, statuses=args.statuses
+                )
+                print_report(path.stem, out[path.stem])
+        return out
+
+    if args.target == "local":
+        with local_server() as base:
+            by_dataset = run(base)
+    else:
+        by_dataset = run(args.target.rstrip("/"))
+
     if args.json:
         args.json.write_text(
             json.dumps({k: [r.__dict__ for r in v] for k, v in by_dataset.items()}, indent=1),
             encoding="utf-8",
         )
-    failed = [r for r in every if not r.passed]
-    print(
-        f"\n{len(every) - len(failed)}/{len(every)} checks passed across {len(by_dataset)} datasets"
-    )
-    return 1 if failed else 0
+    every = [r for results in by_dataset.values() for r in results]
+    return print_prd_table(every, len(by_dataset))
 
 
 if __name__ == "__main__":

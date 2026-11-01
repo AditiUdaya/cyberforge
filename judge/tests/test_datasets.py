@@ -118,3 +118,19 @@ def test_shift_leaves_junk_times_alone() -> None:
     moved = shift(body, timedelta(days=1))
     assert moved["occurred_at"] == "yesterday"
     assert moved["reported_at"] == "2026-10-28T18:21:04"
+
+
+def test_summary_merges_result_files_into_one_table(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from score_dataset import main
+
+    ok = {"row": "1", "label": "a", "passed": True, "detail": ""}
+    bad = {"row": "1", "label": "b", "passed": False, "detail": "x"}
+    (tmp_path / "a.json").write_text(json.dumps({"01_x": [ok, ok]}), encoding="utf-8")
+    (tmp_path / "b.json").write_text(json.dumps({"02_y": [ok, bad]}), encoding="utf-8")
+    code = main(["--summary", str(tmp_path / "a.json"), str(tmp_path / "b.json")])
+    out = capsys.readouterr().out
+    assert code == 1
+    assert "3/4 checks passed across 2 datasets" in out
+    assert "Stops fake reports" in out and "15.0/20" in out

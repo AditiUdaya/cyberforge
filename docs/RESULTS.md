@@ -1,7 +1,19 @@
-<!-- Test run log: check.sh passes, verify_deployed.sh runs, stopwatch report times. Owner: A (A6) and B (B9). Filled in by: A6. -->
+<!-- Test run log. Owner: A and B. -->
 # Results
 
-Test runs are appended here.
+Test runs, newest at the bottom of each section. The server is now a laptop on the judges' Wi-Fi (DECISIONS D59), so the Fly.io run below is history.
+
+## Simulator at different sizes, local, 1 Nov
+
+Fresh seeds never used for tuning, in-process, all 15 families:
+
+| Seeds per family | Scenarios | Time | Measured score | Thresholds |
+| --- | --- | --- | --- | --- |
+| 5 | 75 | 13 s | 82.0 / 82 | all met |
+| 20 | 300 | 49 s | 82.0 / 82 | all met |
+| 60 | 900 | 139 s | 82.0 / 82 | all met |
+
+The held-out run of 750 scenarios (seeds 101 to 150) also passed. Rows 6 and 7 are judged by people and are not measured here.
 
 ## B8 performance, local, 31 Oct
 
@@ -20,7 +32,9 @@ Over a network, round-trip time adds to these; `perf.py --target <url>` measures
 
 Passed end to end: API 406 tests (99% coverage of core and license), judge contract 32/32, held-out simulator all thresholds met, privacy scanners 0 findings, web 180 tests, pip-audit 0 findings in all three projects.
 
-## verify_deployed.sh, 2026-10-31T17:07Z, https://scam-map-api-shubhang.fly.dev
+Re-run on 1 Nov after the latest changes: `scripts/check.sh` passed end to end (exit 0): lint, types, API tests, judge contract, held-out simulator 82.0/82 with all thresholds met, privacy scanners 0 findings, web 197 tests, pip-audit 0 findings.
+
+## verify_deployed.sh, 2026-10-31T17:07Z, https://scam-map-api-shubhang.fly.dev (history: the Fly.io apps were deleted, D59)
 
 - PASS  health
 - PASS  licence valid
@@ -43,7 +57,7 @@ Notes on that run against https://scam-map-api-shubhang.fly.dev (Fly.io, Singapo
 ## Evaluation datasets, local, 31 Oct
 
 `judge/score_dataset.py` loaded the five datasets in `judge/datasets/` (902 PRD-format reports, 4 disputes) into
-the local server and scored them: **119/119 checks passed** (121/121 after the live panel added two), an estimated 82.0 of the 85 points the datasets can
+the local server and scored them: **119/119 checks passed** (121/121 after the live panel added two), an estimated 82.0 of the 82 points the datasets can
 measure (rows 6 and 7 are judged by people).
 
 | Dataset | Reports | Checks |
@@ -56,3 +70,20 @@ measure (rows 6 and 7 are judged by people).
 
 The first scoring run found 4 failures, all in the dataset builder (verified short numbers spelled as mobiles; a
 test area inside the radius check). They were fixed in the builder; the server was unchanged.
+
+## Evaluation datasets loaded with plain curl, 1 Nov
+
+`scripts/curl_load.sh http://127.0.0.1:8000` erased the local server with `POST /admin/reset`, then sent every
+report and dispute of the five datasets as its own `curl -X POST` (906 requests: 902 reports and 4 disputes), with no
+Python client in between. The generated scripts, one literal curl command per line, are in `.local/curl/`.
+
+| What | Result |
+| --- | --- |
+| Unexpected statuses | 0 of 906. Reports: 872 accepted (201), 21 junk refused (400), 9 spam refused (429). Disputes: 3 accepted, 1 refused (400, an invalid number), as the datasets expect. |
+| Database empty after each reset | yes, all 6 resets |
+| Checks, scored per PRD row | 116/116, an estimated 82.0 of the 82 points the datasets can measure |
+| Stored data against the dataset files | 0 differences in note length, area, scam type, screenshot flag or amount for all 872 stored reports, including the Devanagari notes |
+| Time | 141 s for both phases: 6 resets, about 1,800 curl calls, the checks. A curl per report is about 13 requests/s on Windows (the Python client does about 380/s), because each curl is its own process. |
+
+Phase 1 loads and scores each dataset on its own (the checks assume one at a time). Phase 2 loads all five together
+for browsing and is not scored.

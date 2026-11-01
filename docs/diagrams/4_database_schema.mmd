@@ -1,0 +1,86 @@
+erDiagram
+  CASES ||--o{ REPORTS : "has"
+  CASES ||--o{ CHALLENGES : "disputed by"
+  AREAS ||--o{ REPORTS : "located in"
+  AREAS ||--o{ AREA_DAY : "aggregates"
+
+  REPORTS {
+    int id PK
+    string report_id "external"
+    string case_id FK
+    string identifier_type
+    string identifier_hmac
+    string reporter_hmac
+    string ip_prefix_hmac
+    string channel
+    string scam_type "unknown stored as other"
+    string pincode FK
+    datetime occurred_at "UTC"
+    datetime reported_at
+    string note_fingerprint
+    int note_length
+    float originality
+    bool has_screenshot
+    int amount_lost_inr
+    string cluster_id
+    float weight
+    string status "counted, merged, suspect"
+    string origin
+  }
+
+  CASES {
+    string case_id PK
+    string identifier_hmac UK
+    string identifier_type
+    int report_count
+    int distinct_reporters
+    float weighted_score
+    string verdict
+    datetime first_seen
+    datetime last_seen
+    string top_scam_type
+    bool challenged
+  }
+
+  AREA_DAY {
+    string pincode PK
+    date day PK
+    string scam_type PK
+    int trusted_count "counted reports only"
+  }
+
+  AREAS {
+    string pincode PK
+    string locality
+    string city
+    float lat
+    float lng
+    string source "prd or datameet"
+  }
+
+  VERIFIED {
+    string type PK
+    string normalised_value PK
+    string owner
+  }
+
+  CHALLENGES {
+    string challenge_id PK
+    string identifier_hmac FK
+    string claimant_name "never returned or logged"
+    string contact_email "never returned or logged"
+    string proof_note
+    string status
+    datetime created
+  }
+
+  RATE_COUNTERS {
+    string reporter_hmac PK
+    datetime hour PK
+    int count "expires after a day"
+  }
+
+  LICENSE_STATE {
+    string current_licence_json
+    datetime high_water_time
+  }

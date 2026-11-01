@@ -114,8 +114,11 @@ def render(results: list[ScenarioResult], *, seeds_name: str, salt: str, seconds
         total_points += got
         note = f"   ({NOT_MEASURED[row]})" if row in NOT_MEASURED else ""
         lines.append(f"{title:<36} {got:5.1f}/{points:<3} {passed:>4}/{total}{note}")
-    lines.append(f"{'Measured total':<36} {total_points:5.1f}")
-    lines.append("Rows 6 (easy to report) and 7 (demo and code) are judged by people.")
+    possible = sum(points for row, (_, points) in ROWS.items() if row in estimates)
+    lines.append(f"{'Measured total':<36} {total_points:5.1f}/{possible}")
+    lines.append(
+        "Not measured here: rows 6 (15) and 7 (10), judged by people. PRD total: 100 + 7 bonus."
+    )
 
     failures = [(r, c) for r in results for c in r.checks if not c.passed]
     if failures:
