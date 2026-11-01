@@ -170,8 +170,19 @@ The PRD's four-step demo, end to end against any server (waits for the short lic
 DEMO_NUMBER=<a number with reports> scripts/license_demo.sh http://127.0.0.1:8000 licence-5min.json licence-long.json
 ```
 
-A licence's `expires_at` is an absolute time, so **sign the 5-minute file just before the demo**
-(`license_sign.py --expires-in 5m`); an already-expired file is refused. The long licence is signed once.
+A licence's `expires_at` is an absolute time, so **sign the 5-minute file just before the demo**; an
+already-expired file is refused. Run this from the repo root (the private key must exist: `scripts/license_keygen.py`
+makes it once):
+
+```bash
+uv run --project api python scripts/license_sign.py --licensee "Demo Bank" --expires-in 5m --out .local/demo/licence-5min.json
+```
+
+The long licence is signed once:
+
+```bash
+uv run --project api python scripts/license_sign.py --licensee "Demo Bank" --expires-in 365d --out .local/demo/licence-long.json
+```
 
 ## Privacy
 
